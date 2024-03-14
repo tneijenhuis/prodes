@@ -40,13 +40,13 @@ will return the list of options available, which include:
 * Costum pKa values
 
 Prodes as a module examples
-----------------------
+-------------------------------
 To run Prodes and perform a similar action as the comandline implementation simply use
 
 .. code-block:: python
     
     import prodes
-    prodes.run.calculate("./tests/data/1GDW.pdb", "example.csv")
+    prodes.run("./tests/data/1GDW.pdb", "example.csv")
     
 Alternatively, the surface area of a protein can be calculated by running a script similar to 
 
@@ -60,8 +60,14 @@ Alternatively, the surface area of a protein can be calculated by running a scri
     grid.construct_cells(structure.heavy_atoms)
     grid.fill_cells(structure.heavy_atoms)
     
-    sasa.shrake_ruply(grid)
+    sasa.shrake_rupley(grid)
     
     print(structure.surface_area())
     
 
+How to cite
+~~~~~~~~~~~~~~~
+
+If this package is useful for you, please cite Prodes in your publications:
+
+Neijenhuis, T., Le Bussy, O., Geldhof, G., Klijn, M. E., & Ottens, M. (2024). Predicting protein retention in ion-exchange chromatography using an open source QSPR workflow. Biotechnology Journal, 19, e2300708. https://doi.org/10.1002/biot.202300708

@@ -1,0 +1,204 @@
+{    
+    "residues":{
+        "ALA":{
+            "letter": "A",
+            "mass": 71.0788,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 129.0
+        },
+        "ARG": {
+            "letter": "R",
+            "mass": 156.1875,
+            "potential_charge": 1,
+            "pka": 13.8,
+            "charged_atoms": ["NE", "NH1", "NH2"],
+            "aromatic_carbons": [],
+            "gly_x_gly": 274.0
+        },
+        "ASN": {
+            "letter": "N",
+            "mass": 114.1038,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 195.0
+        },   
+        "ASP": {
+            "letter": "D",
+            "mass": 115.0886,
+            "potential_charge": -1,
+            "pka": 3.86,
+            "charged_atoms": ["OD1", "OD2"],
+            "aromatic_carbons": [],
+            "gly_x_gly": 193.0
+        },
+        "CYS": {
+            "letter": "C",
+            "mass": 103.1388,
+            "potential_charge": -1,
+            "pka": 8.33,
+            "charged_atoms": ["SG"],
+            "aromatic_carbons": [],
+            "gly_x_gly": 167.0
+        },
+        "GLN": {
+            "letter": "Q",
+            "mass": 128.1307,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 223.0
+        },
+        "GLU": {
+            "letter" : "E",
+            "mass": 129.1155,
+            "potential_charge": -1,
+            "pka": 4.25,
+            "charged_atoms": ["OE1", "OE2"],
+            "aromatic_carbons": [],
+            "gly_x_gly": 225.0
+        },
+        "GLY": {
+            "letter": "G",
+            "mass": 57.0519,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 104.0
+        },
+        "HIS": {
+            "letter": "H",
+            "mass": 137.1411,
+            "potential_charge": 1,
+            "pka": 6.00,
+            "charged_atoms": ["ND1", "NE2"],
+            "aromatic_carbons": [],
+            "gly_x_gly": 224.0
+        },
+        "ILE": {
+            "letter": "I",
+            "mass": 113.1594,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 197.0
+        },
+        "LEU": {
+            "letter": "L",
+            "mass": 113.1594,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 201.0
+        },
+        "LYS": {
+            "letter": "K",
+            "mass": 128.1741,
+            "potential_charge": 1,
+            "pka": 10.5,
+            "charged_atoms": ["NZ"],
+            "aromatic_carbons": [],
+            "gly_x_gly": 236.0
+        },
+        "MET": {
+            "letter": "M",
+            "mass": 131.1926,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 224.0
+        },
+        "PHE": {
+            "letter": "F",
+            "mass": 147.1766,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": ["CG", "CD1", "CD2", "CE1", "CE2", "CZ"],
+            "gly_x_gly": 240.0            
+        },
+        "PRO": {
+            "letter": "P",
+            "mass": 97.1167,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 159.0
+        },
+        "SER": {
+            "letter": "S",
+            "mass": 87.0782,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 155.0
+        },
+        "THR": {
+            "letter": "T",
+            "mass": 101.1051,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 172.0
+        },
+        "TRP": {
+            "letter": "W",
+            "mass": 186.2132,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": ["CG", "CD1", "CD2", "CE2", "CE3", "CZ2", "CZ3", "CH"],
+            "gly_x_gly": 285.0
+        },
+        "TYR": {
+            "letter": "Y",
+            "mass": 163.1760,
+            "potential_charge": -1,
+            "pka": 10.0,
+            "charged_atoms": ["OH"],
+            "aromatic_carbons": ["CG", "CD1", "CD2", "CE1", "CE2", "CZ"],
+            "gly_x_gly": 263.0
+        },
+        "VAL": {
+            "letter": "V",
+            "mass": 99.1326,
+            "potential_charge": null,
+            "pka": null,
+            "charged_atoms": null,
+            "aromatic_carbons": [],
+            "gly_x_gly": 174.0
+        }
+    },
+    "N_term_pka": 9.69,
+    "C_term_pka": 2.34, 
+
+    "heavy_atom_masses": {
+        "C": 12.0107,
+        "N": 14.0067,
+        "O": 15.9994,
+        "F": 18.9984,
+        "P": 30.9738,
+        "S": 32.065
+    },
+
+    "vdw_radius": {
+        "C": 2.0,
+        "Cr": 1.85,
+        "O": 1.40,
+        "N": 1.50,
+        "S": 1.85
+    }
+    
+}
