@@ -87,7 +87,7 @@ def calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, 
 
     features["SurfEpMaxFormal"] = round(eps.max(), 3)
     features["SurfEpMinFormal"] = round(eps.min(), 3)
-    features.update({f"{k}Formal": v for v, k in standard_features(eps, "SurfEp").items()})
+    features.update({f"{v}Formal": k for v, k in standard_features(eps, "SurfEp").items()})
 
     positive_eps = np.array([ep for ep in eps if ep > 0])
     features["NSurfPosEpFormal"] = len(positive_eps)
