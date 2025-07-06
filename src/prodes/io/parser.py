@@ -151,7 +151,7 @@ def read_pka(file):
             pka_dict[residue] = []
             for pka in pka_list:
                 for identifier, pka_value in pka.items():
-                    pka_dict[residue].append({identifier: int(pka_value)})
+                    pka_dict[residue].append({identifier: float(pka_value)})
         
     return pka_dict    
 
