@@ -1,5 +1,6 @@
 from prodes import data
 
+
 class Atom:
     """Contains all information of each atom from the PDB file"""
 
@@ -122,7 +123,6 @@ class Atom:
         # elif self._charge != 0:
         #     from prodes.data import residue_data
 
-
         #     if self.name == self.residue.terminus:
         #         if self._charge > 0.01:
         #             return 1
@@ -141,7 +141,6 @@ class Atom:
         # else:
         #     return 0
 
-
     def max_area(self, probe_r=1.4):
         """calculates the maximal surface area of an atom"""
 
@@ -150,7 +149,7 @@ class Atom:
         r = self.radius + probe_r
         return (4 * pi * (r**2))
 
-    def max_n_points(self, probe_r=1.4, points_per_a= 2):
+    def max_n_points(self, probe_r=1.4, points_per_a=2):
         area = self.max_area(probe_r=probe_r)
         return int(area*points_per_a)
 

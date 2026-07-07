@@ -116,7 +116,7 @@ def required_distance(point_for_plane, structure, surface_coords):
 def project_point(a, b, c, d, x1, y1, z1):
     """projects point 1 onto plane ax+by+cz=-d"""
 
-    k =(d -a * x1-b * y1-c * z1)/(a * a + b * b + c * c)
+    k = (d - a * x1-b * y1-c * z1)/(a * a + b * b + c * c)
     x2 = a * k + x1
     y2 = b * k + y1
     z2 = c * k + z1
@@ -162,7 +162,7 @@ def find_exit(point_vector, projected_point_vector, grid):
         dot_prod = np.dot(direction, surface_point_vector)
         if dot_prod > 0:
             potential_exit = direction * dot_prod
-            distance = round(np.linalg.norm(potential_exit-surface_point_vector),1)
+            distance = round(np.linalg.norm(potential_exit-surface_point_vector), 1)
 
             if distance <= 1:
                 if dot_prod > highest:
@@ -209,11 +209,12 @@ def find_exit_batch(atom_coords, projected_coords, surface_coords):
 
     return exits, has_exit
 
+
 def map_ep_to_plane(atom, projected_point_vector, surface_exit, ph=7):
     """Calculates the electrostatic potential of an atom projected onto a plane"""
     atom_vector = make_vector(atom)
 
-    total_distance = np.linalg.norm(projected_point_vector- atom_vector)
+    total_distance = np.linalg.norm(projected_point_vector - atom_vector)
     protein_distance = np.linalg.norm(surface_exit - atom_vector)
 
     distances = [(total_distance - protein_distance) * 10**-10, protein_distance * 10**-10]
@@ -269,4 +270,3 @@ def project_point_batch(a, b, c, d, coords):
     x1, y1, z1 = coords[:, 0], coords[:, 1], coords[:, 2]
     k = (d - a * x1 - b * y1 - c * z1) / (a * a + b * b + c * c)
     return coords + k[:, None] * np.array([a, b, c])
-

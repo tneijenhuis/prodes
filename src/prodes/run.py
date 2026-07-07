@@ -39,11 +39,13 @@ def parse_arguments():
     hydro_scale = arg.hydro
     full_features = arg.full_features
 
-    return  pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale, full_features
+    return pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale, full_features
+
 
 def open_output_file(out_file):
     """opens the output file"""
     return pd.read_csv(out_file)
+
 
 def write_output_file(dataframe, out_file):
     """writes a CSV file"""
@@ -77,7 +79,8 @@ def standard_features(values, name="", reduced=False):
 
     return features
 
-def calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, features:dict, full_features=True):
+
+def calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, features: dict, full_features=True):
     """calculates the features from the surface grid"""
 
     reduced = not full_features
@@ -96,7 +99,7 @@ def calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, 
     charged_atoms = np.array([atom for atom in structure.atoms if atom.charge(ph=ph) != 0])
     for cell in grid.cells.flatten():
         cell_surface_points = cell.filtered_content("Property_point")
-        enviroment = np.array([atoms for atoms in grid.grid_content("Atom", cells = grid.find_surrounding_cells(cell))])
+        enviroment = np.array([atoms for atoms in grid.grid_content("Atom", cells=grid.find_surrounding_cells(cell))])
         for point in cell_surface_points:
             point.set_ep(charged_atoms, ph)
             point.set_lipo(enviroment, 10, hydro_scale)
@@ -116,7 +119,6 @@ def calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, 
     features["NSurfNegEpFormal"] = len(negative_eps)
     features.update({f"{v}Formal": k for v, k in standard_features(negative_eps, "SurfEpNeg", reduced=reduced).items()})
 
-
     # Hydrophobic potential features
     lipos = np.array([point.lipo for point in surface_points])
 
@@ -134,7 +136,8 @@ def calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, 
 
     return features
 
-def calculate_average_chargesurface_grid_features(structure, surface_points, ph, features:dict):
+
+def calculate_average_chargesurface_grid_features(structure, surface_points, ph, features: dict):
 
     concat = np.concatenate([structure.heavy_atoms, surface_points])
     grid = grid_wizard.Grid(12)
@@ -163,7 +166,7 @@ def calculate_average_chargesurface_grid_features(structure, surface_points, ph,
     return features
 
 
-def calculate_shell_features(structure, surface_points, ph:float, features:dict, numb_of_planes=120, full_features=True ):
+def calculate_shell_features(structure, surface_points, ph: float, features: dict, numb_of_planes=120, full_features=True):
     """Constructs a number of planes onto which charges are mapped"""
 
     reduced = not full_features
@@ -205,7 +208,8 @@ def calculate_shell_features(structure, surface_points, ph:float, features:dict,
 
     return features
 
-def calculate_structure_features(structure, ph, r_probe, features:dict, full_features=True):
+
+def calculate_structure_features(structure, ph, r_probe, features: dict, full_features=True):
     """calculates general structure features, including"""
 
     features["Molecular weight"] = structure.mw
@@ -232,6 +236,7 @@ def calculate_structure_features(structure, ph, r_probe, features:dict, full_fea
 
     return features
 
+
 def prepare_structure(pdb_file, pkas_file):
     """loads and prepares the structure for the calculations"""
 
@@ -241,6 +246,7 @@ def prepare_structure(pdb_file, pkas_file):
         structure.redo_pkas(pkas)
 
     return structure
+
 
 def construct_surface_grid(structure, r_probe):
     """Constructs the protein surface grid"""
@@ -289,7 +295,6 @@ def calculate(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale
 
     calculated_features = pd.Series(features).to_frame().transpose()
 
-
     try:
         calculated_features = pd.concat([open_output_file(out_file), calculated_features])
 
@@ -302,6 +307,7 @@ def calculate(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale
 def main():
     parsed_arguments = parse_arguments()
     calculate(*parsed_arguments)
+
 
 if __name__ == "__main__":
     main()

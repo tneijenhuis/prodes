@@ -2,6 +2,7 @@ import argparse
 import json
 from prodes import data
 
+
 def parse_arguments():
     """parses the arguments"""
 
@@ -13,6 +14,7 @@ def parse_arguments():
 
     return arg.pka_file, arg.source, arg.output
 
+
 def write_json(dictionary, outputfile):
     """writes dictionary as a json"""
 
@@ -21,17 +23,17 @@ def write_json(dictionary, outputfile):
     with open(outputfile, "w") as f:
         f.write(written_json)
 
-        
+
 def convert_hpp(pka_file):
     """converts H++ format to dictionary"""
 
     pkas = {}
-    with open (pka_file) as f:
+    with open(pka_file) as f:
         for i, line in enumerate(f):
-            
+
             if i == 0:
                 pass
-            
+
             else:
                 if line[0:4] == "Site":
                     break
@@ -54,7 +56,7 @@ def convert_hpp(pka_file):
 
                     elif identifier[0:2] == "CT":
                         identifier = "C-"
-                    
+
                     else:
                         identifier = identifier[0:3].upper()
 
@@ -63,6 +65,7 @@ def convert_hpp(pka_file):
                     else:
                         pkas[res_numb] = [{identifier: res_pka}]
     return pkas
+
 
 def convert_propka(pka_file):
     """converts PROPKA format to dictionary"""
@@ -95,7 +98,7 @@ def convert_propka(pka_file):
 
             if "SUMMARY OF THIS PREDICTION" in line:
                 summary = True
-                
+
     return pkas
 
 
@@ -103,16 +106,16 @@ def convert_pypka(pka_file):
     """Converts pypka output"""
 
     from prodes.data import residue_data
-    
+
     reading = False
     pkas = {}
     with open(pka_file) as f:
         for line in f:
-            
+
             if reading:
                 if line[:3] == "API":
                     break
-                
+
                 split_line = line.split()
 
                 res_numb = split_line[1]
@@ -139,10 +142,12 @@ def convert_pypka(pka_file):
                     else:
                         pkas[res_numb] = [{identifier: res_pka}]
 
-            else: 
+            else:
                 if line[:5] == "Chain":
                     reading = True
     return pkas
+
+
 def main():
     pka_file, source, output_file = parse_arguments()
 
@@ -157,5 +162,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

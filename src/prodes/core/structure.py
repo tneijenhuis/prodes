@@ -48,7 +48,7 @@ class Structure:
         for residue in self.residues:
             total_mass += residue.mass
 # Add the C terminal O to the masses
-        total_mass +=  18.01524
+        total_mass += 18.01524
 
         return round(total_mass, 2)
 
@@ -132,7 +132,6 @@ class Structure:
         dipole = distance(dipole_vector, centre)
 
         return round(dipole, 3)
-
 
     def count_residues_on_surf(self, cutoff=0.20):
         """counts the number of residues on the protein surface using the RSA"""

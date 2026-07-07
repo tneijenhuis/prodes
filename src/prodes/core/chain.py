@@ -61,7 +61,7 @@ class Chain:
         for residue in self.residues:
             total_mass += residue.mass
 # Add the C terminal O to the masses
-        total_mass +=  18.01524
+        total_mass += 18.01524
 
         return round(total_mass, 2)
 

@@ -9,7 +9,6 @@ class Grid():
         self.size = size
         self.__cells = None
 
-
     @property
     def cells(self):
         """Calls the cells and checks if they are already constructed"""
@@ -74,7 +73,7 @@ class Grid():
         center = []
         for coordinate in ["x", "y", "z"]:
             extreme_min, extreme_max = self.find_extremes(np.array([getattr(component, coordinate) for component in content]))
-            center.append((extreme_max + extreme_min)/ 2)
+            center.append((extreme_max + extreme_min) / 2)
 
         return center
 
@@ -83,7 +82,7 @@ class Grid():
 
         from math import ceil, floor
         minimum, maximum = floor(minimum), ceil(maximum)
-        return ceil((maximum- minimum)/self.size)
+        return ceil((maximum - minimum)/self.size)
 
     def find_start(self, center, shape):
         """finds the x, y and z coordinates of the starting cells"""
@@ -93,7 +92,6 @@ class Grid():
             start = center_coordiante - n_cells / 2 * self.size + self.size / 2
             starts.append(start)
         return starts
-
 
     def in_which_cell(self, point):
         """Finds the coordinates in which cell a point should be present"""
@@ -136,7 +134,6 @@ class Grid():
             content = np.array([point for cell in cells for point in cell.content if type(point).__name__ in content_filter])
 
         return content
-
 
 
 def property_points_on_surface(grid, to_consider="Surface_point"):

@@ -13,6 +13,7 @@ for name, res in residues.items():
 n_term = structure.residues[0]
 c_term = structure.residues[-1]
 
+
 def test_empty_residue():
     """tests if a empty residue fails"""
     with pytest.raises(TypeError):
@@ -38,7 +39,7 @@ def test_attributes():
 
 def test_heavy_atoms():
     """tests if correct heavy atoms are called"""
-    
+
     ala_heavies = [
         'N', 'CA', 'C', 'O', 'CB'
     ]
@@ -50,8 +51,8 @@ def test_heavy_atoms():
         'N', 'CA', 'C', 'O', 'CB', 'CG', 'ND2', 'OD1'
     ]
     asp_heavies = [
-       'N', 'CA', 'C', 'O', 'CB',
-       'CG', 'OD1', 'OD2'
+        'N', 'CA', 'C', 'O', 'CB',
+        'CG', 'OD1', 'OD2'
     ]
     cys_heavies = [
         'N', 'CA', 'C', 'O', 'CB', 'SG'
@@ -127,9 +128,10 @@ def test_heavy_atoms():
     assert [atom.name for atom in residues["TYR"].heavy_atoms] == tyr_heavies
     assert [atom.name for atom in residues["VAL"].heavy_atoms] == val_heavies
 
+
 def test_protons():
     """Tests if correct protons are called"""
-    
+
     ala_protons = [
         'H01', 'H02', 'H03', 'H04', 'H12'
     ]
@@ -141,7 +143,7 @@ def test_protons():
         'H01', 'H02', 'H03', 'H04', 'H05', 'H06'
     ]
     asp_protons = [
-       'H01', 'H02', 'H03', 'H10'
+        'H01', 'H02', 'H03', 'H10'
     ]
     cys_protons = [
         'H01', 'H02', 'H03', 'H14'
@@ -228,7 +230,7 @@ def test_pkas():
 # testing side chain PKAs
     assert residues['ALA'].pkas is None
     assert residues['ARG'].pkas == [{"ARG": 13.8}]
-    assert residues['ASN'].pkas is None 
+    assert residues['ASN'].pkas is None
     assert residues['ASP'].pkas == [{"ASP": 3.86}]
     assert residues['CYS'].pkas == [{"CYS": 8.33}]
     assert residues['GLN'].pkas is None
@@ -257,7 +259,7 @@ def test_charge():
 # no charge
     assert residues['ALA'].charge(7) == 0
     assert round(residues['ARG'].charge(14), 3) == 0
-    assert residues['ASN'].charge(7) == 0 
+    assert residues['ASN'].charge(7) == 0
     assert round(residues['ASP'].charge(3), 3) == 0
     assert round(residues['CYS'].charge(8), 3) == 0
     assert residues['GLN'].charge(7) == 0
@@ -275,10 +277,10 @@ def test_charge():
     assert round(residues['TYR'].charge(7), 3) == 0
     assert residues['VAL'].charge(7) == 0
     assert round(n_term.charge(11), 3) == 0
-    assert round(c_term.charge(1), 3)== -0
+    assert round(c_term.charge(1), 3) == -0
 # Positive charge
     assert round(residues["ARG"].charge(12), 3) == 1
-    assert round(residues["LYS"].charge(10), 3) ==1
+    assert round(residues["LYS"].charge(10), 3) == 1
     assert round(n_term.charge(7), 3) == 2
     assert round(n_term.charge(10), 3) == 1
     assert round(residues["HIS"].charge(5), 3) == 1
@@ -288,6 +290,7 @@ def test_charge():
     assert round(residues["TYR"].charge(14), 3) == -1
     assert round(residues["CYS"].charge(14), 3) == -1
     assert round(c_term.charge(14), 3) == -1
+
 
 def test_mass():
     """Tests amino acid masses"""

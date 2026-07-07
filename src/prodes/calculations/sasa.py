@@ -4,7 +4,7 @@ from prodes.calculations.geometry import Sunflower_sphere
 from prodes.calculations.grid_wizard import Grid
 
 
-def shrake_rupley(grid:Grid, probe_r=1.4, consider=["All"]):
+def shrake_rupley(grid: Grid, probe_r=1.4, consider=["All"]):
     """Vectorized Shrake-Rupley SASA calculation.
 
     Takes a grid of atoms and returns a numpy array of Surface_point objects.

@@ -6,6 +6,7 @@ from prodes.io.parser import PDBparser
 
 structure = PDBparser().parse("tests/data/1GDW_h.pdb")
 
+
 def test_empty_structure():
     """tests a empty structure"""
     empty_struct = Structure()
@@ -54,6 +55,7 @@ def test_surface_area():
     """Tests if surface area is correct"""
     with pytest.raises(NameError):
         structure.surface_area()
+
 
 def test_charge():
 
