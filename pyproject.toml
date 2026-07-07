@@ -1,3 +1,49 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools==82.0.1", "wheel==0.47.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "prodes"
+version = "2.0.0"
+description = "A package to calculate protein surface descriptors"
+readme = "README.rst"
+license = {text = "MIT"}
+authors = [
+    {name = "Tim Neijenhuis", email = "t.neijenhuis@tudelft.nl"},
+    {name = "Mark Teese"},
+]
+requires-python = ">=3.13"
+dependencies = [
+    "numpy==2.4.6",
+    "pandas==3.0.3",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.urls]
+Homepage = "https://github.com/datacatalysis/prodes"
+Repository = "https://github.com/datacatalysis/prodes"
+"Original repository" = "https://github.com/Tneijenhuis/prodes"
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "flake8==7.3.0",
+    "mypy==2.1.0",
+    "tox==4.56.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+prodes = ["data/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
