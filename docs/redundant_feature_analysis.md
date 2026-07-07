@@ -80,17 +80,3 @@ set could retain the same information content with roughly 40 features by:
   redundant).
 - Dropping `Sum` features everywhere (recoverable from `Mean × N`).
 - Keeping only one of `Area` / `NSurfPoints`.
-
-The compute savings from dropping features would be modest for Prodes runtime
-itself — the shell features (the slow phase) compute all 120 directional
-potentials regardless of which statistics are derived from them. The main
-benefit is **downstream**: a smaller ML feature space with less collinearity
-and reduced overfitting risk.
-
-## Next steps
-
-A toggle will be added to the Prodes CLI/API to switch between the original
-full feature output (for backwards compatibility) and a reduced feature set
-that drops the redundant columns identified above. The original output remains
-the default out of respect for the original authors and existing downstream
-users.

@@ -22,9 +22,17 @@ COUNT_COLUMNS = {
 
 @pytest.fixture(scope="module")
 def calculated_output(tmp_path_factory):
-    """Run the full calculate() pipeline and return the output DataFrame."""
+    """Run the full calculate() pipeline with full_features=True and return the output DataFrame."""
     out_file = str(tmp_path_factory.mktemp("prodes") / "output.csv")
-    calculate(PDB_PATH, out_file)
+    calculate(PDB_PATH, out_file, full_features=True)
+    return pd.read_csv(out_file)
+
+
+@pytest.fixture(scope="module")
+def reduced_output(tmp_path_factory):
+    """Run the calculate() pipeline with the default reduced feature set."""
+    out_file = str(tmp_path_factory.mktemp("prodes") / "reduced_output.csv")
+    calculate(PDB_PATH, out_file, full_features=False)
     return pd.read_csv(out_file)
 
 
@@ -70,3 +78,66 @@ def test_feature_values_match_original(calculated_output, original_output):
         f"Value mismatches for {len(mismatches)} columns:\n"
         + "\n".join(mismatches[:20])
     )
+
+
+# Features that should be present in both full and reduced sets
+REDUCED_PRESENT = {
+    "Molecular weight", "Isoelectric point", "Dipole", "Formal charge",
+    "Area", "Shape max", "Shape min",
+    "SurfEpMaxFormal", "SurfEpMinFormal",
+    "SurfEpMeanFormal", "SurfEpStdFormal",
+    "NSurfPosEpFormal", "NSurfNegEpFormal",
+    "SurfEpPosMeanFormal", "SurfEpPosStdFormal",
+    "SurfEpNegMeanFormal", "SurfEpNegStdFormal",
+    "SurfMhpMax", "SurfMhpMin", "SurfMhpMean", "SurfMhpStd",
+    "NSurfPosMhp", "NSurfNegMhp",
+    "SurfPosMhpMean", "SurfPosMhpStd",
+    "SurfNegMhpMean", "SurfNegMhpStd",
+    "ShellEpMaxFormal", "ShellEpminFormal",
+    "ShellEpMeanFormal", "ShellEpStdFormal",
+    "NShellPosEpFormal",
+    "ShellEpPosMeanFormal", "ShellEpPosStdFormal",
+    "ShellEpNegMeanFormal", "ShellEpNegStdFormal",
+}
+
+# Features dropped in reduced mode (redundant with others at R² >= 0.95)
+REDUCED_ABSENT = {
+    "Average charge", "NSurfPoints",
+    "SurfEpTrimeanFormal", "SurfEpMedianFormal", "SurfEpSumFormal",
+    "SurfEpPosTrimeanFormal", "SurfEpPosMedianFormal", "SurfEpPosSumFormal",
+    "SurfEpNegTrimeanFormal", "SurfEpNegMedianFormal", "SurfEpNegSumFormal",
+    "SurfMhpTrimean", "SurfMhpMedian", "SurfMhpSum",
+    "SurfPosMhpTrimean", "SurfPosMhpMedian", "SurfPosMhpSum",
+    "SurfNegMhpTrimean", "SurfNegMhpMedian", "SurfNegMhpSum",
+    "ShellEpTrimeanFormal", "ShellEpMedianFormal", "ShellEpSumFormal",
+    "ShellEpPosTrimeanFormal", "ShellEpPosMedianFormal", "ShellEpPosSumFormal",
+    "ShellEpNegTrimeanFormal", "ShellEpNegMedianFormal", "ShellEpNegSumFormal",
+    "NShellNegEpFormal",
+    # Entire Average-charge surface EP block is skipped
+    "SurfEpMaxAverage", "SurfEpMinAverage",
+    "SurfEpMeanAverage", "SurfEpTrimeanAverage", "SurfEpMedianAverage",
+    "SurfEpSumAverage", "SurfEpStdAverage",
+    "NSurfPosEpAverage", "SurfEpPosMeanAverage", "SurfEpPosTrimeanAverage",
+    "SurfEpPosMedianAverage", "SurfEpPosSumAverage", "SurfEpPosStdAverage",
+    "NSurfNegEpAverage", "SurfEpNegMeanAverage", "SurfEpNegTrimeanAverage",
+    "SurfEpNegMedianAverage", "SurfEpNegSumAverage", "SurfEpNegStdAverage",
+}
+
+
+def test_reduced_has_fewer_columns(reduced_output, calculated_output):
+    """The reduced feature set should have substantially fewer columns than the full set."""
+    assert len(reduced_output.columns) < len(calculated_output.columns)
+
+
+def test_reduced_contains_core_features(reduced_output):
+    """Key non-redundant features should still be present in the reduced set."""
+    cols = set(reduced_output.columns)
+    missing = REDUCED_PRESENT - cols
+    assert missing == set(), f"Missing core features in reduced set: {missing}"
+
+
+def test_reduced_drops_redundant_features(reduced_output):
+    """Redundant features should be absent from the reduced set."""
+    cols = set(reduced_output.columns)
+    present = REDUCED_ABSENT & cols
+    assert present == set(), f"Redundant features still present in reduced set: {present}"
