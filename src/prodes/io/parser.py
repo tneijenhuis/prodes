@@ -1,8 +1,9 @@
 import numpy as np
-from prodes.core.structure import Structure
+
+from prodes.core.atom import Atom
 from prodes.core.chain import Chain
 from prodes.core.residue import Residue
-from prodes.core.atom import Atom
+from prodes.core.structure import Structure
 
 
 class PDBparser:

@@ -126,6 +126,7 @@ def project_point(a, b, c, d, x1, y1, z1):
 def find_exit(point_vector, projected_point_vector, grid):
     """finds the position where the vector between two points leaves the protein"""
     from math import ceil
+
     from prodes.core.point import Point
 
     normal_vector = projected_point_vector - point_vector

@@ -1,4 +1,5 @@
 import pytest
+
 from prodes.core.residue import Residue
 from prodes.io import parser as ps
 

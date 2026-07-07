@@ -1,5 +1,6 @@
-import numpy as np
 from math import floor as _floor
+
+import numpy as np
 
 
 class Grid():

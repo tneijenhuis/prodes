@@ -53,7 +53,7 @@ class Atom:
         """Returns the charge of a atom"""
 
         from prodes import data
-        from prodes.calculations.standard_equations import pos_charge, neg_charge
+        from prodes.calculations.standard_equations import neg_charge, pos_charge
 
         charge = 0
 

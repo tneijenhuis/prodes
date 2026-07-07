@@ -1,12 +1,11 @@
-from prodes.core.point import Point, Property_point
+import local_descriptors as ld
+import matplotlib.pyplot as plt
+import numpy as np
+
 from prodes.calculations.grid_wizard import Grid, property_points_on_surface
 from prodes.calculations.sasa import shrake_rupley
+from prodes.core.point import Point, Property_point
 from prodes.io.parser import PDBparser
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-import local_descriptors as ld
 
 structure = PDBparser().parse("package/tests/data/1GDW.pdb")
 grid = Grid(12)

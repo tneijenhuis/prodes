@@ -62,8 +62,8 @@ class Residue:
     def charged_atoms(self, ph):
         """searches for the charged atom of the residue"""
 
+        from prodes.calculations.standard_equations import neg_charge, pos_charge
         from prodes.data import residue_data
-        from prodes.calculations.standard_equations import pos_charge, neg_charge
         charged_atoms = []
         if self.pkas:
 

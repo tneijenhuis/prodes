@@ -3,7 +3,6 @@ import pytest
 
 from prodes.run import calculate
 
-
 PDB_PATH = "tests/data/ARH96693.pdb"
 ORIG_OUTPUT = "tests/data/ARH96693_prodes_orig_output.csv"
 

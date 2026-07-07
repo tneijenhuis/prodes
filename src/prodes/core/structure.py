@@ -113,8 +113,8 @@ class Structure:
     def dipole(self, ph=7, formal=True):
         """Calculates the depole moment using atom partial charges"""
 
-        from prodes.core.point import Point
         from prodes.calculations.standard_equations import distance
+        from prodes.core.point import Point
 
         debye = 4.803
         dipole_vector = Point(0, 0, 0)
@@ -174,7 +174,7 @@ class Structure:
     def rotate(self, x_degree=0, z_degree=0):
         """Rotates the structure around the x and z axis"""
 
-        from math import cos, sin, radians
+        from math import cos, radians, sin
 
         x_degree = radians(x_degree)
         z_degree = radians(z_degree)

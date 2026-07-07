@@ -1,6 +1,6 @@
 import pytest
-from prodes.io import parser
 
+from prodes.io import parser
 
 file_path = "tests/data/1GDW.pdb"
 pdb_parser = parser.PDBparser()

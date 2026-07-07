@@ -5,11 +5,10 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 
-from prodes.calculations.sasa import shrake_rupley, shape
-from prodes.io import parser as ps
-from prodes.calculations import grid_wizard
+from prodes.calculations import geometry, grid_wizard
+from prodes.calculations.sasa import shape, shrake_rupley
 from prodes.calculations.standard_equations import trimean
-from prodes.calculations import geometry
+from prodes.io import parser as ps
 
 load_dotenv()
 

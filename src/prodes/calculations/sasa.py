@@ -12,8 +12,9 @@ def shrake_rupley(grid: Grid, probe_r=1.4, consider=["All"]):
     of per-point Python loops, giving identical results with significant speedup.
     """
 
-    from prodes.core.point import Surface_point
     from math import pi
+
+    from prodes.core.point import Surface_point
     surface_list = []
     grid_cells = grid.cells.flatten()
     structure_ref = None

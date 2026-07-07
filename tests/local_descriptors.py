@@ -1,12 +1,11 @@
 
 import numpy as np
-from prodes.io.parser import PDBparser, Builder, write_pdb
+
 from prodes.calculations.geometry import Sunflower_sphere
 from prodes.calculations.grid_wizard import Grid, property_points_on_surface
 from prodes.calculations.sasa import shrake_rupley
-
-
 from prodes.core.structure import Structure
+from prodes.io.parser import Builder, PDBparser, write_pdb
 
 
 def make_vector(point):
