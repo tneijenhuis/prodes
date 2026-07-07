@@ -27,12 +27,17 @@ def find_middel(a, b):
 
 
 def trimean(values):
-    """Calculates the trimean of a set of values"""
+    """Calculates the trimean of a set of values.
 
+    When all values are equal (q1 or q3 lists are empty), the missing quartile
+    falls back to q2 so the result equals q2 rather than NaN.
+    """
     q2 = np.median(values)
-    q1 = np.median([x for x in values if x < q2])
-    q3 = np.median([x for x in values if x > q2])
-    return (q2*2 + q1 + q3)/4
+    below = [x for x in values if x < q2]
+    above = [x for x in values if x > q2]
+    q1 = np.median(below) if below else q2
+    q3 = np.median(above) if above else q2
+    return (q2 * 2 + q1 + q3) / 4
 
 def pos_charge(pka,ph):
     """calculate the charge of a group which can be protonated"""

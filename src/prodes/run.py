@@ -160,9 +160,14 @@ def calculate_shell_features(structure, surface_points, ph:float, features:dict,
         plane = geometry.find_plane(point, structure)
         shell_potential = 0
         for atom in charged_atoms:
-            
             projected_atom = geometry.project_point(*plane, *geometry.make_vector(atom))
             surface_exit = geometry.find_exit(geometry.make_vector(atom), projected_atom, surface_grid)
+            if surface_exit is None:
+                # No surface crossing found for this atom (e.g. fully buried or
+                # the surface grid has no points along this projection vector).
+                # Skip the atom's contribution rather than propagating None into
+                # the distance calculation, which would raise a TypeError.
+                continue
             projected_potential = geometry.map_ep_to_plane(atom, projected_atom, surface_exit, ph)
             shell_potential += projected_potential
 
