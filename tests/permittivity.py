@@ -1,11 +1,8 @@
-from prodes.core.point import Point
-from prodes.io.parser import PDBparser, Builder, write_pdb
+from prodes.core.point import Point, Property_point
 from prodes.calculations.grid_wizard import Grid, property_points_on_surface
 from prodes.calculations.sasa import shrake_rupley
-from prodes.core.structure import Structure
-from prodes.core.point import Point, Property_point
+from prodes.io.parser import PDBparser
 
-from mpl_toolkits import mplot3d
 import numpy as np
 import matplotlib.pyplot as plt
 

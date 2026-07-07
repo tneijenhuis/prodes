@@ -92,7 +92,7 @@ def main():
         property_dummies.append(dummy)
     surf_struct.atoms = np.array(property_dummies)
 
-    write_pdb(surf_struct, f"1GDW_surf.pdb")
+    write_pdb(surf_struct, "1GDW_surf.pdb")
     surrounding_points = Sunflower_sphere(*make_vector(structure), 1, 120).points
 
     for i, point in enumerate(surrounding_points):

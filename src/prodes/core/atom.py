@@ -156,7 +156,7 @@ class Atom:
     def surface_area(self, probe_r=1.4, points_per_a=2):
         """calculates the surface area"""
 
-        if self.structure.surface_done is False or self.structure == None:
+        if self.structure.surface_done is False or self.structure is None:
             raise NameError("First calculate the SASA before calling the surface area")
 
         else:

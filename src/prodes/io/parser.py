@@ -182,6 +182,9 @@ def write_pdb(structure, filename, chain="all"):
                         atoms = np.concatenate((atoms, struct_chain.atoms))
             viable_residues = data.all_residues().keys()
             atom_nmbr = 0
+            col4 = ""
+            col5 = ""
+            col6 = ""
             for atom in atoms:
 
                 if atom_nmbr > 0:
