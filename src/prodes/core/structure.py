@@ -12,46 +12,33 @@ class Structure:
         self._x = None
         self._y = None
         self._z = None
+        self._heavy_atoms = None
         self.surface_done = False
+
+    def _compute_centroid(self):
+        coords = np.array([[a.x, a.y, a.z] for a in self.heavy_atoms])
+        self._x, self._y, self._z = coords.mean(axis=0)
 
     @property
     def x(self):
         """returns the x coordinate of the com"""
-
-        if self._x:
-            return self._x
-        else:
-            x = 0.0
-            for atom in self.heavy_atoms:
-                x += atom.x
-            self._x = x / len(self.heavy_atoms)
-            return self._x
+        if self._x is None:
+            self._compute_centroid()
+        return self._x
 
     @property
     def y(self):
         """returns the y coordinate of the com"""
-
-        if self._y:
-            return self._y
-        else:
-            y = 0.0
-            for atom in self.heavy_atoms:
-                y += atom.y
-            self._y = y / len(self.heavy_atoms)
-            return self._y
+        if self._y is None:
+            self._compute_centroid()
+        return self._y
 
     @property
     def z(self):
         """Returns the z coordinate of the com"""
-
-        if self._z:
-            return self._z
-        else:
-            z = 0.0
-            for atom in self.heavy_atoms:
-                z += atom.z
-            self._z = z / len(self.heavy_atoms)
-            return self._z
+        if self._z is None:
+            self._compute_centroid()
+        return self._z
 
     @property
     def mw(self):
@@ -60,9 +47,9 @@ class Structure:
         total_mass = 0.0
         for residue in self.residues:
             total_mass += residue.mass
-# Add the C terminal O to the masses 
+# Add the C terminal O to the masses
         total_mass +=  18.01524
-                
+
         return round(total_mass, 2)
 
     def isoelectric_point(self, decimals=3):
@@ -86,8 +73,9 @@ class Structure:
     @property
     def heavy_atoms(self):
         """Returns a list containing all heavy atoms within the structure"""
-
-        return np.array([atom for residue in self.residues for atom in residue.heavy_atoms])
+        if self._heavy_atoms is None:
+            self._heavy_atoms = np.array([atom for residue in self.residues for atom in residue.heavy_atoms])
+        return self._heavy_atoms
 
     @property
     def furthest_heavy_atom(self):
@@ -108,7 +96,7 @@ class Structure:
 
         if self.surface_done is False:
             raise NameError("First calculate the SASA before calling the surface area")
-        
+
         total_area = 0
         for atom in self.heavy_atoms:
             total_area += atom.surface_area(probe_r=probe_r)

@@ -30,7 +30,7 @@ def parse_arguments():
     hydro_scale = arg.hydro
 
 
-    return  pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale 
+    return  pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale
 
 def open_output_file(out_file):
     """opens the output file"""
@@ -44,7 +44,7 @@ def write_output_file(dataframe, out_file):
 def standard_features(values, name=""):
     """calculates the mean, trimean, median, sum and standard diviation of a np array of values"""
     features = {}
-    
+
     if len(values) != 0:
         features[f"{name}Mean"] = round(values.mean(), 3)
         features[f"{name}Trimean"] = round(trimean(values), 3)
@@ -96,7 +96,7 @@ def calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, 
     negative_eps = np.array([ep for ep in eps if ep < 0])
     features["NSurfNegEpFormal"] = len(negative_eps)
     features.update({f"{v}Formal": k for v, k in standard_features(negative_eps, "SurfEpNeg").items()})
-    
+
 
     # Hydrophobic potential features
     lipos = np.array([point.lipo for point in surface_points])
@@ -155,7 +155,7 @@ def calculate_shell_features(structure, surface_points, ph:float, features:dict,
     charged_atoms = np.array([atom for atom in structure.heavy_atoms if atom.charge != 0])
     for i,point in enumerate(distributed_points):
         distance = geometry.required_distance(point, structure, surface_points)
-        geometry.move_point(point, structure, distance)  
+        geometry.move_point(point, structure, distance)
 
         plane = geometry.find_plane(point, structure)
         shell_potential = 0
@@ -192,7 +192,7 @@ def calculate_shell_features(structure, surface_points, ph:float, features:dict,
 
 def calculate_structure_features(structure, ph, r_probe, features:dict):
     """calculates general structure features, including"""
-    
+
     features["Molecular weight"] = structure.mw
     features["Isoelectric point"] = structure.isoelectric_point()
     features["Dipole"] = structure.dipole(ph)
@@ -203,22 +203,22 @@ def calculate_structure_features(structure, ph, r_probe, features:dict):
         grid_size = 10 + (r_probe - 1.4) * 2
         grid = grid_wizard.Grid(grid_size)
         grid.construct_cells(structure.heavy_atoms)
-        grid.fill_cels(structure.heavy_atoms)
+        grid.fill_cells(structure.heavy_atoms)
 
         shrake_rupley(grid, r_probe)
-    
+
     features["Area"] = round(structure.surface_area(r_probe), 3)
 
     fractions = structure.residue_surf_fractions(r_probe)
 
     for residue, fraction in fractions.items():
         features[f"{residue}SurfFrac"] = fraction
-    
+
     return features
 
 def prepare_structure(pdb_file, pkas_file):
     """loads and prepares the structure for the calculations"""
-    
+
     structure = ps.PDBparser().parse(pdb_file)
     if pkas_file:
         pkas = ps.read_pka(pkas_file)
@@ -227,7 +227,7 @@ def prepare_structure(pdb_file, pkas_file):
     return structure
 
 def construct_surface_grid(structure, r_probe):
-    """Constructs the protein surface grid""" 
+    """Constructs the protein surface grid"""
 
     grid_size = 10 + (r_probe - 1.4) * 2
     grid = grid_wizard.Grid(grid_size)
@@ -256,9 +256,9 @@ def calculate(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale
         pka_file: a output file of PROPKA which is required for costum pKa assignment
         ph: the ph at which protonation states should be calculated
         r_probe: the radius of the probe used to calculate the solvent accessible surface area
-        hydro_scale: the abriviation of the hydrophibicity scale used (scales can be found in data/hydrophobicity)    
-    """    
-    
+        hydro_scale: the abriviation of the hydrophibicity scale used (scales can be found in data/hydrophobicity)
+    """
+
     structure = prepare_structure(pdb_file, pkas_file)
     surface_points = construct_surface_grid(structure, r_probe)
     features = {"ID": structure.name}
@@ -269,11 +269,11 @@ def calculate(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale
     features = calculate_shell_features(structure, surface_points, ph, features)
 
     calculated_features = pd.Series(features).to_frame().transpose()
-    
+
 
     try:
         calculated_features = pd.concat([open_output_file(out_file), calculated_features])
-        
+
     except FileNotFoundError:
         pass
 
@@ -283,6 +283,6 @@ def calculate(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale
 def main():
     parsed_arguments = parse_arguments()
     calculate(*parsed_arguments)
-    
+
 if __name__ == "__main__":
     main()

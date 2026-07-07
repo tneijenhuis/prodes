@@ -1,0 +1,12 @@
+name: prodes
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - numpy=2.2.6
+  - pandas=2.2.3
+  - pytest=8.3.5
+  - pytest-cov=6.0.0
+  - pip=25.0.1
+  - pip:
+      - -e .

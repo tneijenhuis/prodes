@@ -54,20 +54,26 @@ class Property_point():
         Args :
             Atoms : array of Atom objects"""
 
-        from prodes.calculations.standard_equations import distance
-        from prodes.calculations import distance_functions
+        charged = [atom for atom in atoms if atom.charge(ph=ph, formal=formal) != 0]
+        if not charged:
+            self.__ep = 0
+            return
 
-        ep = 0
-        for atom in np.array([atom for atom in atoms if atom.charge(ph=ph, formal=formal) != 0]):
+        coords = np.array([[a.x, a.y, a.z] for a in charged])
+        charges = np.array([a.charge(ph=ph, formal=formal) for a in charged])
+        point_coord = np.array([self.x, self.y, self.z])
 
-            dist = distance(self, atom)
-            if dist <= cutoff:
-                charge = distance_functions.atom_charge_coulomb(atom.charge(ph=ph, formal=formal))
+        dists = np.sqrt(np.sum((coords - point_coord)**2, axis=1))
+        mask = dists <= cutoff
+        if not np.any(mask):
+            self.__ep = 0
+            return
 
-                ep_cont = distance_functions.charge_simple(charge, dist*10**-10, 4)
-                ep += ep_cont
-
-        self.__ep = round(ep, 2)
+        coulomb_charges = charges[mask] * 1.6e-19
+        dists_m = dists[mask] * 1e-10
+        absolute_permittivity = 8.854e-12
+        ep = np.sum(coulomb_charges / (4 * absolute_permittivity * dists_m * 4 * np.pi))
+        self.__ep = round(float(ep), 2)
 
     def set_lipo(self, atoms, cutoff=10, scale="mj_scaled"):
         """Projects the lipophilysity of an array of atoms onto the point
@@ -75,22 +81,30 @@ class Property_point():
         Arguments:
             Atoms : array of Atom objects"""
 
-        from math import exp
-
         from prodes.data import hydrophobic_scale
-        from prodes.calculations.standard_equations import distance
 
-        lipophilicity = 0
+        non_h = [atom for atom in atoms if atom.element != "H"]
+        if not non_h:
+            self.__lipo = 0
+            return
 
         scale_dict = hydrophobic_scale(scale)
-        for atom in np.array([atom for atom in atoms if atom.element != "H"]):
-            dist = distance(self, atom)
-            if dist <= cutoff:
-                if atom.name != "OXT":
-                    lipophilicity += scale_dict[atom.residue_name] * exp(-dist)
-                else:
-                    lipophilicity += 1 * exp(-dist)
+        coords = np.array([[a.x, a.y, a.z] for a in non_h])
+        point_coord = np.array([self.x, self.y, self.z])
 
+        dists = np.sqrt(np.sum((coords - point_coord)**2, axis=1))
+        mask = dists <= cutoff
+        if not np.any(mask):
+            self.__lipo = 0
+            return
+
+        dists_masked = dists[mask]
+        atoms_masked = [a for a, m in zip(non_h, mask) if m]
+        contributions = np.array([
+            1.0 if a.name == "OXT" else scale_dict[a.residue_name]
+            for a in atoms_masked
+        ])
+        lipophilicity = float(np.sum(contributions * np.exp(-dists_masked)))
         self.__lipo = lipophilicity
 
 
@@ -102,14 +116,22 @@ class Cell():
         self.y = y
         self.z = z
         self.size = size
-        self.content = np.empty([0])
+        self._content_list = []
+        self._content_array = None
         self.empty = True
+
+    @property
+    def content(self):
+        if self._content_array is None:
+            self._content_array = np.array(self._content_list)
+        return self._content_array
 
     def filtered_content(self, *content_filter):
         """returns an array with filtered objects"""
         return np.array([component for component in self.content if type(component).__name__ in content_filter])
-        
+
     def add_content(self, content):
         """Adds something to the cell instance"""
-        self.content = np.concatenate([self.content, np.array([content])])
+        self._content_list.append(content)
+        self._content_array = None
         self.empty = False

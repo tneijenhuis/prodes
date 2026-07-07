@@ -1,5 +1,5 @@
 import numpy as np
-from prodes.calculations.standard_equations import distance
+from math import floor as _floor
 
 
 class Grid():
@@ -8,7 +8,7 @@ class Grid():
     def __init__(self, size):
         self.size = size
         self.__cells = None
-        
+
 
     @property
     def cells(self):
@@ -17,7 +17,7 @@ class Grid():
         if self.__cells is None:
             raise NameError("No cells have been constructed")
 
-        else:  
+        else:
             return self.__cells
 
     def construct_cells(self, content):
@@ -28,14 +28,14 @@ class Grid():
         center = self.find_center(content)
         x_start, y_start, z_start = self.find_start(center, shape)
         x_cells, y_cells, z_cells = shape
-    
+
         grid = []
         for z_number in range(z_cells):
-            z = z_start + self.size * z_number            
+            z = z_start + self.size * z_number
             plane = []
             for y_number in range(y_cells):
                 line = []
-                y = y_start + self.size * y_number  
+                y = y_start + self.size * y_number
                 for x_number in range(x_cells):
                     x = x_start + self.size * x_number
                     cell = Cell(self.size, x, y, z)
@@ -55,17 +55,17 @@ class Grid():
 
     def scout_box_geometries(self, content, factor=1):
         """scouts the different axis lengths of the grid"""
-        
+
         shape = []
         for coordinate in ["x", "y", "z"]:
             extremes = self.find_extremes(np.array([getattr(component, coordinate) for component in content])) * factor
             shape.append(self.required_cells(*extremes))
-        
+
         return shape
 
     def find_extremes(self, array):
         """finds the extremes of a list of numbers"""
-        
+
         return np.amin(array), np.amax(array)
 
     def find_center(self, content):
@@ -75,12 +75,12 @@ class Grid():
         for coordinate in ["x", "y", "z"]:
             extreme_min, extreme_max = self.find_extremes(np.array([getattr(component, coordinate) for component in content]))
             center.append((extreme_max + extreme_min)/ 2)
-        
+
         return center
 
     def required_cells(self, minimum, maximum):
         """Calculates the number of required cells to based on the cell size"""
-        
+
         from math import ceil, floor
         minimum, maximum = floor(minimum), ceil(maximum)
         return ceil((maximum- minimum)/self.size)
@@ -94,20 +94,19 @@ class Grid():
             starts.append(start)
         return starts
 
-        
+
     def in_which_cell(self, point):
         """Finds the coordinates in which cell a point should be present"""
 
-        from math import floor
-
-        corner_cell  = self.cells[0, 0, 0]
-        which_cell = []
-        for coordinate in ["x", "y", "z"]:
-            point_coordinate = getattr(point, coordinate)
-            origin_coordinate = getattr(corner_cell, coordinate) - self.size / 2
-            which_cell.append(floor((point_coordinate - origin_coordinate) / self.size))
-
-        return which_cell
+        corner_cell = self.cells[0, 0, 0]
+        origin_x = corner_cell.x - self.size / 2
+        origin_y = corner_cell.y - self.size / 2
+        origin_z = corner_cell.z - self.size / 2
+        return [
+            _floor((point.x - origin_x) / self.size),
+            _floor((point.y - origin_y) / self.size),
+            _floor((point.z - origin_z) / self.size),
+        ]
 
     def find_surrounding_cells(self, cell):
         """Gets the gridcells surounding a specific cell"""
@@ -115,19 +114,12 @@ class Grid():
         grid = self.cells
         cell_x, cell_y, cell_z = self.in_which_cell(cell)
         z_lim, y_lim, x_lim = [numb - 1 for numb in grid.shape]
-        sub_enviroment = []
-        directions = [-1, 0, 1]
-        for z in directions:
-            to_add_z = cell_z+ z
-            if to_add_z >= 0 and to_add_z <= z_lim:
-                for y in directions:
-                    to_add_y = cell_y + y
-                    if to_add_y >= 0 and to_add_y <= y_lim:
-                        for x in directions:
-                            to_add_x = cell_x + x
-                            if to_add_x >= 0 and to_add_x <= x_lim:
-                                sub_enviroment.append(grid[to_add_z, to_add_y, to_add_x])
-        return np.array(sub_enviroment)
+
+        zs = np.unique(np.clip(np.array([cell_z - 1, cell_z, cell_z + 1]), 0, z_lim))
+        ys = np.unique(np.clip(np.array([cell_y - 1, cell_y, cell_y + 1]), 0, y_lim))
+        xs = np.unique(np.clip(np.array([cell_x - 1, cell_x, cell_x + 1]), 0, x_lim))
+
+        return grid[np.ix_(zs, ys, xs)].flatten()
 
     def grid_content(self, *content_filter, cells=None):
         """Returns the content of the cells
@@ -144,7 +136,7 @@ class Grid():
             content = np.array([point for cell in cells for point in cell.content if type(point).__name__ in content_filter])
 
         return content
-        
+
 
 
 def property_points_on_surface(grid, to_consider="Surface_point"):
@@ -152,28 +144,36 @@ def property_points_on_surface(grid, to_consider="Surface_point"):
 
     from prodes.core.point import Property_point
 
+    start = None
     for cell in grid.cells.flatten():
         if len(cell.filtered_content(to_consider)) > 0:
             start = cell
             break
 
-    surface_points = np.empty([0])
-    done_cells = np.empty([0])
-    todo_cells = np.array([start])
+    if start is None:
+        return np.empty([0])
 
-    while todo_cells.size > 0:
-        next_todo = np.empty([0])
+    surface_points = []
+    done_ids = set()
+    todo_cells = [start]
+
+    while todo_cells:
+        next_todo = []
+        next_todo_ids = set()
         for cell in todo_cells:
-            surface_point = Property_point(cell.x, cell.y, cell.z)
-            surface_points = np.concatenate([surface_points, np.array([surface_point])])
-            done_cells = np.concatenate([done_cells, np.array([cell])])
-            
+            surface_points.append(Property_point(cell.x, cell.y, cell.z))
+            done_ids.add(id(cell))
+
             surrounding = grid.find_surrounding_cells(cell)
 
             for neighbour in surrounding:
-                if neighbour.empty == cell.empty and neighbour not in next_todo and neighbour not in done_cells:
-                    next_todo = np.concatenate([next_todo, np.array([neighbour])])
+                nid = id(neighbour)
+                if (neighbour.empty == cell.empty
+                        and nid not in done_ids
+                        and nid not in next_todo_ids):
+                    next_todo.append(neighbour)
+                    next_todo_ids.add(nid)
 
-        todo_cells = np.array([cells for cells in next_todo if cells not in done_cells])
+        todo_cells = [c for c in next_todo if id(c) not in done_ids]
 
-    return surface_points
+    return np.array(surface_points)

@@ -24,38 +24,42 @@ class Atom:
         self.cloud = []
         self.cell = None
         self._charge = _charge
+        self._radius = None
+        self._radius_computed = False
 
     @property
     def radius(self):
         """Will find the vdw radius of the atom.
         If atom is not in the list of standard elements, none will be returened"""
-        
-        if self.element is None:
-            element = self.name[0]
 
-        else:
-            element = self.element
-
-        if element != "H":
-            if self.name in data.residue_data(self.residue_name)["aromatic_carbons"]:
-                return data.vdw_radius("Cr")
+        if not self._radius_computed:
+            self._radius_computed = True
+            if self.element is None:
+                element = self.name[0]
             else:
-                return data.vdw_radius(element)
-        else:
-            return None
+                element = self.element
+
+            if element != "H":
+                if self.name in data.residue_data(self.residue_name)["aromatic_carbons"]:
+                    self._radius = data.vdw_radius("Cr")
+                else:
+                    self._radius = data.vdw_radius(element)
+            else:
+                self._radius = None
+        return self._radius
 
     def charge(self, ph=7, formal=True):
         """Returns the charge of a atom"""
 
         from prodes import data
         from prodes.calculations.standard_equations import pos_charge, neg_charge
-        
+
         charge = 0
 
         residue_data = data.residue_data(self.residue_name)
         potential_charge = residue_data["potential_charge"]
         if potential_charge is not None:
-        
+
             if self.name in residue_data["charged_atoms"]:
                 if formal is True:
                     if potential_charge > 0:
@@ -63,20 +67,20 @@ class Atom:
                             charge = 1/len(residue_data["charged_atoms"])
                         else:
                             charge = 0
-                    
+
                     elif potential_charge < 0:
                         if list(self.residue.pkas[0].values())[0] < ph:
                             charge = -1/len(residue_data["charged_atoms"])
                         else:
                             charge = 0
 
-                else: 
+                else:
                     if potential_charge > 0:
                         charge = pos_charge(list(self.residue.pkas[0].values())[0], ph)/len(residue_data["charged_atoms"])
-                    
+
                     else:
                         charge = neg_charge(list(self.residue.pkas[0].values())[0], ph)/len(residue_data["charged_atoms"])
-        
+
         if self.name == self.residue.terminus:
 
             if formal is True:
@@ -99,7 +103,7 @@ class Atom:
             else:
                 if self.name == "N":
                     charge = pos_charge(list(self.residue.pkas[-1].values())[0], ph)
-                
+
                 elif self.name == "C":
                     charge = neg_charge(list(self.residue.pkas[-1].values())[0], ph)
 
@@ -110,16 +114,16 @@ class Atom:
 
         #     if self.name not in charged_atoms:
         #         self._charge = 0
-        
+
         # return self._charge
         # if exact:
         #     return self._charge
-        
+
         # elif self._charge != 0:
         #     from prodes.data import residue_data
 
 
-        #     if self.name == self.residue.terminus:           
+        #     if self.name == self.residue.terminus:
         #         if self._charge > 0.01:
         #             return 1
         #         elif self._charge < -0.01:
@@ -152,12 +156,12 @@ class Atom:
 
     def surface_area(self, probe_r=1.4, points_per_a=2):
         """calculates the surface area"""
-        
+
         if self.structure.surface_done is False or self.structure == None:
             raise NameError("First calculate the SASA before calling the surface area")
 
         else:
             n_surf_points = len(self.cloud)
             max_area = self.max_area(probe_r=probe_r)
-            max_n_points = self.max_n_points(probe_r=probe_r, points_per_a=points_per_a) 
+            max_n_points = self.max_n_points(probe_r=probe_r, points_per_a=points_per_a)
             return max_area/max_n_points*n_surf_points

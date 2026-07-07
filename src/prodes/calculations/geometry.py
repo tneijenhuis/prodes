@@ -36,10 +36,7 @@ class Sunflower_sphere:
 
             self.angles = np.array([theta, phi])
 
-            points = np.empty([0])
-            for i in range(len(x)):
-                point = Point(x[i], y[i], z[i])
-                points = np.concatenate([points, np.array([point])])
+            points = np.array([Point(xi, yi, zi) for xi, yi, zi in zip(x, y, z)])
 
             self._points = points
 
