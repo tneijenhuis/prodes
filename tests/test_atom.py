@@ -1,4 +1,5 @@
 import pytest
+
 from prodes.core.atom import Atom
 
 
@@ -72,5 +73,3 @@ def test_surface_area():
     with pytest.raises(NameError):
         c_atom.surface_area()
         cr_atom.surface_area()
-        
-        

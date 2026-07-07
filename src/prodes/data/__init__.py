@@ -1,14 +1,15 @@
 import importlib.resources
 import json
 
+
 def hydrophobic_scale(scale):
     """Extracts the hydrophobicity scale"""
-    
+
     with importlib.resources.open_text("prodes.data", "hydrophobicity.json") as f:
         data = json.load(f)
-    
+
     try:
-        return data[scale]   
+        return data[scale]
 
     except KeyError:
         raise KeyError(f"Scale {scale} is not found in the list of hydrophobicity scales")
@@ -25,13 +26,12 @@ def residue_data(residue):
             f"{residue} is not found in the list with residues "
             "Please make sure you provide the three letter code all caps"
         )
-    
+
 
 def all_residues():
     """loads all residue data"""
-       
-    return data["residues"]
 
+    return data["residues"]
 
 
 def vdw_radius(element):
@@ -67,5 +67,6 @@ def _open_general():
         data = json.load(f)
 
     return data
+
 
 data = _open_general()

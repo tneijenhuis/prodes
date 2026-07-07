@@ -11,6 +11,7 @@ class Chain:
         self._x = None
         self._y = None
         self._z = None
+        self._heavy_atoms = None
 
     @property
     def x(self):
@@ -59,13 +60,14 @@ class Chain:
         total_mass = 0.0
         for residue in self.residues:
             total_mass += residue.mass
-# Add the C terminal O to the masses 
-        total_mass +=  18.01524
-                
+# Add the C terminal O to the masses
+        total_mass += 18.01524
+
         return round(total_mass, 2)
 
     @property
     def heavy_atoms(self):
         """Returns a list containing all heavy atoms within the structure"""
-
-        return np.array([atom for residue in self.residues for atom in residue.heavy_atoms])
+        if self._heavy_atoms is None:
+            self._heavy_atoms = np.array([atom for residue in self.residues for atom in residue.heavy_atoms])
+        return self._heavy_atoms

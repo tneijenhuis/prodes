@@ -3,13 +3,13 @@ import pytest
 from prodes.core.structure import Structure
 from prodes.io.parser import PDBparser
 
-
 structure = PDBparser().parse("tests/data/1GDW_h.pdb")
+
 
 def test_empty_structure():
     """tests a empty structure"""
     empty_struct = Structure()
-    assert empty_struct.name == None
+    assert empty_struct.name is None
 
 
 def test_structure_coordinates():
@@ -54,6 +54,7 @@ def test_surface_area():
     """Tests if surface area is correct"""
     with pytest.raises(NameError):
         structure.surface_area()
+
 
 def test_charge():
 

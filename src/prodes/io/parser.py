@@ -1,8 +1,9 @@
 import numpy as np
-from prodes.core.structure import Structure
+
+from prodes.core.atom import Atom
 from prodes.core.chain import Chain
 from prodes.core.residue import Residue
-from prodes.core.atom import Atom
+from prodes.core.structure import Structure
 
 
 class PDBparser:
@@ -142,7 +143,7 @@ def read_pka(file):
     pka json files can be generated using the pka_converter in prodes.io"""
 
     import json
-   
+
     with open(file) as f:
         pka_dict = {}
         pkas = json.loads(f.read())
@@ -152,14 +153,14 @@ def read_pka(file):
             for pka in pka_list:
                 for identifier, pka_value in pka.items():
                     pka_dict[residue].append({identifier: float(pka_value)})
-        
-    return pka_dict    
 
-def write_pdb(structure, filename, chain = "all"):
+    return pka_dict
 
+
+def write_pdb(structure, filename, chain="all"):
     """
     takes a Structure object to generate a PDB formatted file using the Atoms information
-    
+
     arguments:
     structure = Structure object
     filename = PATH + name of the to be generated file
@@ -169,7 +170,7 @@ def write_pdb(structure, filename, chain = "all"):
 
     if ".pdb" not in filename:
         print("can only make files witb pdb extention")
-        
+
     else:
         with open(filename, 'w') as f:
             if chain == "all":
@@ -182,58 +183,61 @@ def write_pdb(structure, filename, chain = "all"):
                         atoms = np.concatenate((atoms, struct_chain.atoms))
             viable_residues = data.all_residues().keys()
             atom_nmbr = 0
+            col4 = ""
+            col5 = ""
+            col6 = ""
             for atom in atoms:
-                
+
                 if atom_nmbr > 0:
                     if col4.strip() in viable_residues and atom.residue_name in viable_residues and col5.strip() != atom.chain_name:
-                        
+
                         atom_nmbr += 1
-                        
+
                         col2 = str(atom_nmbr)
                         for i in range((5 - len(col2))):
                             col2 = " " + col2
-                        
+
                         f.write("TER   {}     {}{}{}\n".format(col2, col4, col5, col6))
                     elif col4.strip() in viable_residues and atom.residue_name not in viable_residues:
 
                         atom_nmbr += 1
-                        
+
                         col2 = str(atom_nmbr)
                         for i in range((5 - len(col2))):
                             col2 = " " + col2
-                        
+
                         f.write("TER   {}     {}{}{}\n".format(col2, col4, col5, col6))
 
-                atom_nmbr +=1
-                
+                atom_nmbr += 1
+
                 col1 = atom.identifier
                 for i in range((6 - len(col1))):
                     col1 = col1 + " "
-                
+
                 col2 = str(atom_nmbr)
                 for i in range((5 - len(col2))):
                     col2 = " " + col2
-                
-                col3 = atom.name   
+
+                col3 = atom.name
                 for i in range((5 - len(col3))):
                     if i < 2:
                         col3 = " " + col3
                     else:
                         col3 = col3 + " "
-                
+
                 col4 = atom.residue_name
                 for i in range((5 - len(col4))):
                     if i < 1:
                         col4 = " " + col4
                     else:
                         col4 = col4 + " "
-                
+
                 col5 = atom.chain_name
 
                 col6 = str(atom.residue_name)
                 for i in range((4 - len(col6))):
                     col6 = " " + col6
-                
+
                 col7 = str(atom.x)
                 if len(col7) > 11:
                     col7 = col7[:7]
@@ -245,21 +249,21 @@ def write_pdb(structure, filename, chain = "all"):
                     col8 = col8[:7]
                 for i in range(8 - len(col8)):
                     col8 = " " + col8
-                
+
                 col9 = str(atom.z)
                 if len(col9) > 8:
                     col9 = col9[:7]
                 for i in range(8 - len(col9)):
-                    col9 = " " + col9 
-                
+                    col9 = " " + col9
+
                 col10 = ""
                 for i in range(6-len(col10)):
                     col10 = " " + col10
-                
+
                 col11 = ""
                 for i in range(6-len(col11)):
                     col11 = " " + col11
-                
+
                 col12 = atom.segment_id
                 for i in range(4-len(atom.segment_id)):
                     col12 = " " + col12
@@ -274,19 +278,18 @@ def write_pdb(structure, filename, chain = "all"):
 
 class Builder():
 
-    def build_dummy_atom(self, x, y, z, chain_name = "A", ep = "", size = ""):
+    def build_dummy_atom(self, x, y, z, chain_name="A", ep="", size=""):
         identifier = "ATOM"
         name = "X"
         residue_name = "DUM"
         chain_name = chain_name
-        residue_number = 0 
+        residue_number = 0
         occupancy = ""
         segid = ""
         temperature_factor = ""
         element = "X"
-        
 
         atom = Atom(identifier, name, residue_name, chain_name, residue_number, x, y, z, occupancy,
-                temperature_factor, segid, element)
+                    temperature_factor, segid, element)
 
         return atom

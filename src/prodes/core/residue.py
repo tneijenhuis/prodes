@@ -11,12 +11,14 @@ class Residue:
         self.chain = chain
         self._pka = _pka
         self.terminus = terminus
+        self._heavy_atoms = None
 
     @property
     def heavy_atoms(self):
         """Returns a list containing all heavy atoms within the structure"""
-
-        return np.array([atoms for atoms in self.atoms if atoms.element != "H"])
+        if self._heavy_atoms is None:
+            self._heavy_atoms = np.array([atoms for atoms in self.atoms if atoms.element != "H"])
+        return self._heavy_atoms
 
     @property
     def protons(self):
@@ -27,7 +29,7 @@ class Residue:
     @property
     def pkas(self):
         if self._pka is None:
-            from prodes import data 
+            from prodes import data
             pka = data.residue_data(self.name)["pka"]
             pkas = []
             if pka is not None:
@@ -60,8 +62,8 @@ class Residue:
     def charged_atoms(self, ph):
         """searches for the charged atom of the residue"""
 
+        from prodes.calculations.standard_equations import neg_charge, pos_charge
         from prodes.data import residue_data
-        from prodes.calculations.standard_equations import pos_charge, neg_charge
         charged_atoms = []
         if self.pkas:
 
@@ -101,7 +103,7 @@ class Residue:
 
         if self.structure.surface_done is False or self.structure is None:
             raise NameError("First calculate the SASA before calling the surface area")
-        
+
         total_area = 0
         for atom in self.heavy_atoms:
             total_area += atom.surface_area(probe_r=probe_r)
@@ -110,10 +112,10 @@ class Residue:
 
     def rsa(self, probe_r=1.4):
         """Calculate the RSA based on the surface area"""
-        
+
         if self.structure.surface_done is False or self.structure is None:
             raise NameError("First calculate the SASA before calling the surface area")
-        
+
         else:
             from prodes.data import residue_data
             gly_x_gly = residue_data["gly_x_gly"]

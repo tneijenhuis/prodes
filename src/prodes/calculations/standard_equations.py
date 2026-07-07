@@ -1,4 +1,5 @@
 import math
+
 import numpy as np
 
 
@@ -27,23 +28,30 @@ def find_middel(a, b):
 
 
 def trimean(values):
-    """Calculates the trimean of a set of values"""
+    """Calculates the trimean of a set of values.
 
+    When all values are equal (q1 or q3 lists are empty), the missing quartile
+    falls back to q2 so the result equals q2 rather than NaN.
+    """
     q2 = np.median(values)
-    q1 = np.median([x for x in values if x < q2])
-    q3 = np.median([x for x in values if x > q2])
-    return (q2*2 + q1 + q3)/4
+    below = [x for x in values if x < q2]
+    above = [x for x in values if x > q2]
+    q1 = np.median(below) if below else q2
+    q3 = np.median(above) if above else q2
+    return (q2 * 2 + q1 + q3) / 4
 
-def pos_charge(pka,ph):
+
+def pos_charge(pka, ph):
     """calculate the charge of a group which can be protonated"""
 
     return 1/(1+10**(ph-pka))
 
 
-def neg_charge(pka,ph):
+def neg_charge(pka, ph):
     """calculate the charge of a group which can be deprotonated"""
 
     return -1/(1+10**(pka-ph))
+
 
 def angle_d2(vector1, vector2):
     """Calculates the angle between two 3d vectors in radians"""
@@ -53,16 +61,18 @@ def angle_d2(vector1, vector2):
 
 
 def rotation_x(theta):
-  return np.matrix([[ 1, 0           , 0           ],
-                   [ 0, math.cos(theta),-math.sin(theta)],
-                   [ 0, math.sin(theta), math.cos(theta)]])
-  
+    return np.matrix([[1, 0, 0],
+                     [0, math.cos(theta), -math.sin(theta)],
+                     [0, math.sin(theta), math.cos(theta)]])
+
+
 def rotation_y(theta):
-  return np.matrix([[ math.cos(theta), 0, math.sin(theta)],
-                   [ 0           , 1, 0           ],
-                   [-math.sin(theta), 0, math.cos(theta)]])
-  
+    return np.matrix([[math.cos(theta), 0, math.sin(theta)],
+                     [0, 1, 0],
+                     [-math.sin(theta), 0, math.cos(theta)]])
+
+
 def rotation_z(theta):
-  return np.matrix([[ math.cos(theta), -math.sin(theta), 0 ],
-                   [ math.sin(theta), math.cos(theta) , 0 ],
-                   [ 0           , 0            , 1 ]])
+    return np.matrix([[math.cos(theta), -math.sin(theta), 0],
+                     [math.sin(theta), math.cos(theta), 0],
+                     [0, 0, 1]])
