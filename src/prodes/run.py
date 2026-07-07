@@ -147,34 +147,27 @@ def calculate_average_chargesurface_grid_features(structure, surface_points, ph,
 def calculate_shell_features(structure, surface_points, ph:float, features:dict, numb_of_planes=120 ):
     """Constructs a number of planes onto which charges are mapped"""
 
+    surface_coords = np.array([[p.x, p.y, p.z] for p in surface_points])
     distributed_points = geometry.Sunflower_sphere(*geometry.make_vector(structure), 1, numb_of_planes).points
+
+    charged_atoms = [atom for atom in structure.heavy_atoms if atom.charge != 0]
+    charged_coords = np.array([[a.x, a.y, a.z] for a in charged_atoms])
+    charged_charges = np.array([a.charge(ph) for a in charged_atoms])
+
     shell_potentials = []
-    surface_grid = grid_wizard.Grid(2)
-    surface_grid.construct_cells(surface_points)
-    surface_grid.fill_cells(surface_points)
-    charged_atoms = np.array([atom for atom in structure.heavy_atoms if atom.charge != 0])
-    for i,point in enumerate(distributed_points):
-        distance = geometry.required_distance(point, structure, surface_points)
+    for point in distributed_points:
+        distance = geometry.required_distance(point, structure, surface_coords)
         geometry.move_point(point, structure, distance)
 
         plane = geometry.find_plane(point, structure)
-        shell_potential = 0
-        for atom in charged_atoms:
-            projected_atom = geometry.project_point(*plane, *geometry.make_vector(atom))
-            surface_exit = geometry.find_exit(geometry.make_vector(atom), projected_atom, surface_grid)
-            if surface_exit is None:
-                # No surface crossing found for this atom (e.g. fully buried or
-                # the surface grid has no points along this projection vector).
-                # Skip the atom's contribution rather than propagating None into
-                # the distance calculation, which would raise a TypeError.
-                continue
-            projected_potential = geometry.map_ep_to_plane(atom, projected_atom, surface_exit, ph)
-            shell_potential += projected_potential
+        projected_coords = geometry.project_point_batch(*plane, charged_coords)
+        exits, has_exit = geometry.find_exit_batch(charged_coords, projected_coords, surface_coords)
+        potentials = geometry.map_ep_to_plane_batch(
+            charged_coords, projected_coords, exits, has_exit, charged_charges
+        )
+        shell_potentials.append(float(potentials.sum()))
 
-        shell_potentials.append(shell_potential)
-        # print(shell_potential, shell_potentials)
     shell_potentials = np.array(shell_potentials)
-    # print(shell_potentials)
 
     features["ShellEpMaxFormal"] = round(shell_potentials.max(), 3)
     features["ShellEpminFormal"] = round(shell_potentials.min(), 3)
