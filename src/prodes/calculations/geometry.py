@@ -8,13 +8,14 @@ from math import sqrt
 class Sunflower_sphere:
 
     def __init__(self, x, y, z, r, n_points):
-        
+
         self.x = x
         self.y = y
         self.z = z
         self.r = r
         self.n_points = n_points
         self._points = None
+        self._raw_coords = None
 
     @property
     def points(self):
@@ -44,6 +45,21 @@ class Sunflower_sphere:
 
         return self._points
 
+    @property
+    def raw_coordinates(self):
+        """Returns sphere point coordinates as an (N, 3) numpy array without wrapping in Point objects."""
+
+        if self._raw_coords is None:
+            indices = np.arange(0, self.n_points, dtype=float) + 0.5
+            phi = np.arccos(1 - 2*indices/self.n_points)
+            theta = np.pi * (1 + 5**0.5) * indices
+            x = np.cos(theta) * np.sin(phi) * self.r + self.x
+            y = np.sin(theta) * np.sin(phi) * self.r + self.y
+            z = np.cos(phi) * self.r + self.z
+            self._raw_coords = np.column_stack([x, y, z])
+
+        return self._raw_coords
+
 
 def make_vector(point):
     return np.array([point.x, point.y, point.z])
@@ -51,20 +67,20 @@ def make_vector(point):
 
 def find_plane(point_on_plane, normal_vector_point):
     """finds the linear equation of a plane"""
-    
+
     point_on_plane_vector = make_vector(point_on_plane)
 
     a, b, c = make_vector(normal_vector_point) - point_on_plane_vector
     x_0, y_0, z_0 = point_on_plane_vector
 
     product = a * x_0 + b * y_0 + c * z_0
-   
+
     return a, b, c, product
 
 
 def move_point(point, origin, magnitude):
     """changes the magnitude of a point from a specific origin"""
-    
+
     point_vector, origin_vector = make_vector(point), make_vector(origin)
 
     vector = point_vector - origin_vector
@@ -95,11 +111,11 @@ def required_distance(point_for_plane, structure, surface_points):
     normal_vector = make_vector(point_for_plane) - vector_on_plane
 
     return maximal_distance(normal_vector, vector_on_plane, surface_points) + 1
-    
+
 
 def project_point(a, b, c, d, x1, y1, z1):
     """projects point 1 onto plane ax+by+cz=-d"""
-      
+
     k =(d -a * x1-b * y1-c * z1)/(a * a + b * b + c * c)
     x2 = a * k + x1
     y2 = b * k + y1
@@ -124,7 +140,7 @@ def find_exit(point_vector, projected_point_vector, grid):
         cell = grid.in_which_cell(Point(*sample_point))
         if cell not in cells:
             cells.append(cell)
-            
+
     environment = []
     for cell in cells:
         x, y, z = cell
@@ -150,7 +166,7 @@ def find_exit(point_vector, projected_point_vector, grid):
 
             if distance <= 1:
                 if dot_prod > highest:
-                    highest = dot_prod 
+                    highest = dot_prod
                     surface_exit = potential_exit+point_vector
 
     return surface_exit
@@ -161,10 +177,10 @@ def map_ep_to_plane(atom, projected_point_vector, surface_exit, ph=7):
 
     total_distance = np.linalg.norm(projected_point_vector- atom_vector)
     protein_distance = np.linalg.norm(surface_exit - atom_vector)
-    
+
     distances = [(total_distance - protein_distance) * 10**-10, protein_distance * 10**-10]
     atom_charge = atom_charge_coulomb(atom.charge(ph))
-    
+
     point_potential = potential_multiple_media(atom_charge, distances, [80, 4])
 
     return point_potential
