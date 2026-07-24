@@ -37,6 +37,8 @@ dev = [
     "pytest-cov==7.1.0",
     "flake8==7.3.0",
     "mypy==2.1.0",
+    "pandas-stubs==3.0.5.260730",
+    "sphinx==8.2.3",
     "tox==4.56.2",
 ]
 

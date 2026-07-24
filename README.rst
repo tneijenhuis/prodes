@@ -67,6 +67,74 @@ Improvements in this fork
   across 820 proteins found significant redundancy. See
   `docs/redundant_feature_analysis.md <docs/redundant_feature_analysis.md>`_.
 
+Calculation time and protein size
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: docs/surface_calc_time_vs_length.png
+   :alt: Surface property calculation time vs protein size
+   :width: 75%
+
+   Surface property calculation time vs total sequence length of all chains.
+   The relationship is exponential (R² = 0.95).
+
+Calculation time scales **exponentially** with the total sequence length of
+all chains in the structure. For proteins below ~500 residues (summed across
+all chains), calculations typically complete in under 15 minutes on a single
+CPU core. Above ~1,000 residues, calculation time rises sharply and can
+exceed several hours.
+
+If you experience long calculation times, consider splitting large structures
+into individual chains or domains where biologically meaningful.
+
+A full benchmark report, including server specifications and the fitted
+exponential model, is available in
+`docs/calculation_time_benchmark.md <docs/calculation_time_benchmark.md>`_.
+
+CPU usage and parallelism
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The NumPy vectorisation in this fork speeds up calculations within a single
+process, but it does **not** use multiple CPU cores — each Prodes run is
+limited to one core. When processing many proteins, the recommended way to
+achieve full throughput is to run multiple Prodes processes in parallel (one
+protein per process), e.g. with ``multiprocessing``, GNU ``parallel``, or a
+batch scheduler.
+
+There is room for future improvement here: utilising multiple cores within a
+single run would be particularly valuable for processing one large protein
+quickly, as needed for standalone predictive services. This may be addressed
+in a future release.
+
+Memory usage
+~~~~~~~~~~~~~~
+
+The vectorised calculations allocate intermediate NumPy arrays whose size
+grows with the number of surface points — so RAM usage is very likely related
+to the size of the protein. To prevent out-of-memory crashes on machines with
+limited RAM, the largest allocations (in ``find_exit_batch``) are chunked to
+stay within a per-chunk memory budget controlled by ``PRODES_MEM_LIMIT_MB``
+(default: 2048 MB). A lower limit means smaller chunks: less peak RAM, but
+slower.
+
+The limit can be set in three ways:
+
+* **Environment variable** — set ``PRODES_MEM_LIMIT_MB`` in your shell or in
+  a ``.env`` file (see ``.env.example``).
+* **CLI flag** — ``python -m prodes in.pdb out.csv --mem-limit 2048``, which
+  takes precedence over the environment variable.
+* **Function argument** — when calling Prodes as a library, pass
+  ``mem_limit_mb`` directly to ``prodes.run.calculate(...)`` (recommended in
+  worker processes, so you don't rely on environment variables being
+  inherited).
+
+Monitor RAM usage during a run on your machine and adjust accordingly.
+Currently working with 8192 on server with 128 GB RAM and 10 instances of
+prodes, and 2048 on a 16 GB machine with one instance of prodes.
+Keep in mind that when running multiple proteins with
+multiprocessing, RAM usage is **cumulative** across processes — divide the
+available memory by the number of parallel workers (and leave headroom for
+the OS).
+
 Output compatibility
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -134,20 +202,29 @@ fractions — all from a single command, with no external solver dependency.
 Requirements
 ~~~~~~~~~~~~~~
 
-Prodes requires Python 3.13. All dependencies are pinned to exact versions for
-reproducibility and stability.
+All dependencies are pinned to exact versions for reproducibility and stability.
 
 Installation
 ~~~~~~~~~~~~~
 
-**Option 1: Conda (recommended)**
+**Option 1: Conda / Mamba (recommended)**
 
-Clone this repository and create a dedicated conda environment using the committed ``environment.yml``::
+Clone this repository and create a dedicated conda environment using the
+committed ``environment.yml`` (runtime dependencies only)::
 
-    conda env create -f environment.yml
+    conda env create -n prodes -f environment.yml
     conda activate prodes
 
-This installs all runtime and development dependencies with pinned versions.
+Or with mamba::
+
+    mamba env create -n prodes -f environment.yml
+    conda activate prodes
+
+For **development**, additionally apply ``environment_dev.yml`` which adds
+testing, linting, type-checking, and documentation tools::
+
+    conda env update -n prodes -f environment_dev.yml
+    # or: mamba env update -n prodes -f environment_dev.yml
 
 **Option 2: Pip inside a conda environment**
 
@@ -160,10 +237,6 @@ Create a minimal conda environment, then install with pip::
 For development::
 
     pip install -e ".[dev]"
-
-Or equivalently::
-
-    pip install -e . -r requirements_dev.txt
 
 Getting started
 ~~~~~~~~~~~~~~~~~~

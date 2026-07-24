@@ -1,0 +1,4 @@
+# Copy this file to .conda-env (gitignored) and put your conda environment name on the line below.
+# AI coding assistants should always use this environment when running scripts, e.g.
+# 'source activate prodes && python -m pytest'
+prodes
