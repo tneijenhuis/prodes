@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prodes"
-version = "2.0.0"
+version = "3.0.0"
 description = "A package to calculate protein surface descriptors"
 readme = "README.rst"
 license = {text = "MIT"}
@@ -17,6 +17,8 @@ dependencies = [
     "numpy==2.4.6",
     "pandas==3.0.3",
     "python-dotenv==1.2.2",
+    "pyyaml==6.0.3",
+    "threadpoolctl==3.6.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -64,7 +66,10 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]
-ignore = ["E501", "B905"]
+# B905: zip() without strict=. The reassembly loops that write worker results back
+# onto the parent's objects rely on the lengths matching, and a silent truncation
+# there produces wrong feature values rather than an error.
+ignore = ["E501"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true

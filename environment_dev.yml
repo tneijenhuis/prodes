@@ -3,6 +3,10 @@ channels:
 dependencies:
   - sphinx=8.2.3
   - pandas-stubs=3.0.5.260730
+  # Only used by scripts/plot_benchmark.py, which is a local and server tool.
+  # matplotlib-base avoids pulling in the GUI toolkits, which a headless server
+  # does not need. Deliberately not in the pyproject dev extras: CI never plots.
+  - matplotlib-base=3.11.1
   - pytest=9.1.1
   - pytest-cov=7.1.0
   - black=26.5.1

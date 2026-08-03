@@ -1,0 +1,348 @@
+# This file is the single source of truth for which features Prodes writes;
+# prodes.feature_dictionary reads its feature codes and order from here.
+# Maintained by hand: edit this file to add, drop or re-describe a feature.
+meta:
+  title: Prodes reduced feature set
+  description: The features Prodes calculates by default. Keys are the feature codes written as CSV column headings, in output order.
+  feature_count: 54
+  written_when: always
+  source: prodes (Neijenhuis et al. 2024), https://github.com/Tneijenhuis/prodes
+  default_settings:
+    ph: 7
+    probe_radius_A: 1.4
+    hydrophobicity_scale: mj_scaled (Miyazawa-Jernigan, scaled)
+  conventions:
+    stat_suite: For any property X, the suite is Mean, Trimean, Median, Sum, Std. Trimean = (Q1 + 2*Q2 + Q3)/4. 'Max' and 'Min' are also reported separately. 'NPos*' / 'NNeg*' are the counts of surface points with strictly positive / negative values, and the 'Pos' / 'Neg' stats are computed over those subsets only.
+    formal_vs_average: Formal = electrostatic potential computed using integer formal charges of titratable residues at the given pH (each residue is fully protonated or fully deprotonated). Average = computed using partial/pKa-weighted (Henderson-Hasselbalch) charges, so each titratable site contributes a fractional charge.
+    units: Lengths in angstrom (A), area in A^2, mass in Da, charge in elementary units e. Electrostatic potentials are in arbitrary Coulombic units (charge_simple with eps_r=4); use only as relative descriptors. MHP is unitless.
+  fields:
+    plot_name: Short label for an axis or legend.
+    short_explanation: One-line description of what the feature is.
+    long_explanation: How the feature is calculated and how to read it.
+    original_explanation: The description from Supplemental Table 1 of Neijenhuis et al. 2024. Null for the few features added to the code after publication.
+    unit: Unit of measurement as given by that paper. Null when the feature is dimensionless, such as a fraction or a ratio, or when the paper does not list it.
+features:
+  Molecular weight:
+    plot_name: Molecular weight (Da)
+    short_explanation: Molecular mass summed from residue masses, plus one water for the C-terminus.
+    long_explanation: Computed by Structure.mw as the sum of the standard mass of every residue in the structure, taken from a lookup table, plus 18.015 Da for the C-terminal water. It is derived from the residue composition rather than from the atom records, so it does not change with whether hydrogens are present in the PDB file. For an AlphaFold monomer this is the mass of one chain in Da.
+    unit: Da
+    original_explanation: Sum of the weight of each amino acid in the protein
+  Isoelectric point:
+    plot_name: Isoelectric point (pI)
+    short_explanation: pH at which the net charge of the protein is zero.
+    long_explanation: Calculated by titrating all ionisable residues with their (PROPKA-shifted if a .pka file is supplied, otherwise standard) pKa values and finding the pH where the total charge crosses zero. Determines the sign of the net charge in CEX vs AEX at a given operating pH.
+    unit: null
+    original_explanation: The estimated isoelectric point
+  Dipole:
+    plot_name: Dipole moment
+    short_explanation: Magnitude of the molecular dipole moment at the operating pH.
+    long_explanation: Vector sum of position-weighted partial charges of all atoms at the given pH, reported as a magnitude. A large dipole means the positive and negative charges are spatially separated, so the protein has a strongly oriented electrostatic field even if the net charge is small.
+    unit: Å
+    original_explanation: The magnitude of the dipole vector
+  Formal charge:
+    plot_name: Net formal charge
+    short_explanation: Net charge using integer (fully protonated/deprotonated) formal charges at the operating pH.
+    long_explanation: 'Sum over titratable residues of their integer charge state determined by comparing pH to pKa: a residue is counted as fully +1, 0, or -1. Coarser than ''Average charge'' but matches how net charge is often discussed.'
+    unit: null
+    original_explanation: The charge calculated based on the pH of the solution using binary charges of +1, 0 or -1
+  Area:
+    plot_name: Solvent-accessible surface area (A^2)
+    short_explanation: Total SASA of the structure with a 1.4 A probe (default).
+    long_explanation: Computed by prodes' Shrake-Rupley implementation on heavy atoms with the given probe radius. Larger area indicates a more extended or rougher surface; correlates with size but also with shape.
+    unit: Å²
+    original_explanation: The calculated surface area based on the Shrake Rupley algorithm
+  ALASurfFrac:
+    plot_name: Surface fraction Ala
+    short_explanation: Fraction of total SASA contributed by alanine residues.
+    long_explanation: SASA of all Ala atoms divided by the total SASA. Reports how 'alanine-rich' the solvent-exposed surface is, independent of overall size.
+    unit: null
+    original_explanation: Fraction of alanine on the surface calculated by dividing the alanine surface area by the total surface area
+  ARGSurfFrac:
+    plot_name: Surface fraction Arg
+    short_explanation: Fraction of total SASA contributed by arginine residues.
+    long_explanation: SASA of all Arg atoms divided by the total SASA. Arg is positively charged at neutral pH, so this is one of the strongest indicators of a positive surface in CEX/AEX behaviour.
+    unit: null
+    original_explanation: Fraction of arginine on the surface calculated by dividing the arginine surface area by the total surface area
+  ASNSurfFrac:
+    plot_name: Surface fraction Asn
+    short_explanation: Fraction of total SASA contributed by asparagine residues.
+    long_explanation: SASA of all Asn atoms divided by the total SASA. Asn is polar uncharged; contributes to hydrogen-bonding/hydrophilic surface character.
+    unit: null
+    original_explanation: Fraction of asparagine on the surface calculated by dividing the asparagine surface area by the total surface area
+  ASPSurfFrac:
+    plot_name: Surface fraction Asp
+    short_explanation: Fraction of total SASA contributed by aspartate residues.
+    long_explanation: SASA of all Asp atoms divided by the total SASA. Asp is negatively charged at neutral pH; a key contributor to negative surface character.
+    unit: null
+    original_explanation: Fraction of aspartic acid on the surface calculated by dividing the aspartic acid surface area by the total surface area
+  CYSSurfFrac:
+    plot_name: Surface fraction Cys
+    short_explanation: Fraction of total SASA contributed by cysteine residues.
+    long_explanation: SASA of all Cys atoms divided by the total SASA. Often small because most Cys are buried in disulfides; surface Cys can drive thiol-specific interactions.
+    unit: null
+    original_explanation: Fraction of cysteine on the surface calculated by dividing the cysteine surface area by the total surface area
+  GLNSurfFrac:
+    plot_name: Surface fraction Gln
+    short_explanation: Fraction of total SASA contributed by glutamine residues.
+    long_explanation: SASA of all Gln atoms divided by the total SASA. Polar uncharged, similar role to Asn but with a longer side chain.
+    unit: null
+    original_explanation: Fraction of glutamine on the surface calculated by dividing the glutamine surface area by the total surface area
+  GLUSurfFrac:
+    plot_name: Surface fraction Glu
+    short_explanation: Fraction of total SASA contributed by glutamate residues.
+    long_explanation: SASA of all Glu atoms divided by the total SASA. Negatively charged at neutral pH; together with Asp dominates negative surface character.
+    unit: null
+    original_explanation: Fraction of glutamic acid on the surface calculated by dividing the glutamic acid surface area by the total surface area
+  GLYSurfFrac:
+    plot_name: Surface fraction Gly
+    short_explanation: Fraction of total SASA contributed by glycine residues.
+    long_explanation: SASA of all Gly atoms divided by the total SASA. No side chain; mostly reports backbone exposure in flexible/loop regions.
+    unit: null
+    original_explanation: Fraction of glycine on the surface calculated by dividing the glycine surface area by the total surface area
+  HISSurfFrac:
+    plot_name: Surface fraction His
+    short_explanation: Fraction of total SASA contributed by histidine residues.
+    long_explanation: SASA of all His atoms divided by the total SASA. His pKa is near 6, so its protonation state and charge contribution is pH-sensitive in typical CEX operating ranges.
+    unit: null
+    original_explanation: Fraction of histidine on the surface calculated by dividing the histidine surface area by the total surface area
+  ILESurfFrac:
+    plot_name: Surface fraction Ile
+    short_explanation: Fraction of total SASA contributed by isoleucine residues.
+    long_explanation: SASA of all Ile atoms divided by the total SASA. Strongly hydrophobic; surface Ile contributes to hydrophobic patches.
+    unit: null
+    original_explanation: Fraction of isoleucine on the surface calculated by dividing the isoleucine surface area by the total surface area
+  LEUSurfFrac:
+    plot_name: Surface fraction Leu
+    short_explanation: Fraction of total SASA contributed by leucine residues.
+    long_explanation: SASA of all Leu atoms divided by the total SASA. Strongly hydrophobic; major contributor to hydrophobic surface fraction.
+    unit: null
+    original_explanation: Fraction of leucine on the surface calculated by dividing the leucine surface area by the total surface area
+  LYSSurfFrac:
+    plot_name: Surface fraction Lys
+    short_explanation: Fraction of total SASA contributed by lysine residues.
+    long_explanation: SASA of all Lys atoms divided by the total SASA. Positively charged at neutral pH; together with Arg drives positive surface character.
+    unit: null
+    original_explanation: Fraction of lysine on the surface calculated by dividing the lysine surface area by the total surface area
+  METSurfFrac:
+    plot_name: Surface fraction Met
+    short_explanation: Fraction of total SASA contributed by methionine residues.
+    long_explanation: SASA of all Met atoms divided by the total SASA. Hydrophobic; usually a small fraction.
+    unit: null
+    original_explanation: Fraction of methionine on the surface calculated by dividing the methionine surface area by the total surface area
+  PHESurfFrac:
+    plot_name: Surface fraction Phe
+    short_explanation: Fraction of total SASA contributed by phenylalanine residues.
+    long_explanation: SASA of all Phe atoms divided by the total SASA. Aromatic, hydrophobic; contributes to hydrophobic and pi-interaction-prone surface.
+    unit: null
+    original_explanation: Fraction of phenylalanine on the surface calculated by dividing the phenylalanine surface area by the total surface area
+  PROSurfFrac:
+    plot_name: Surface fraction Pro
+    short_explanation: Fraction of total SASA contributed by proline residues.
+    long_explanation: SASA of all Pro atoms divided by the total SASA. Common in turns/loops; structurally constrained.
+    unit: null
+    original_explanation: Fraction of proline on the surface calculated by dividing the proline surface area by the total surface area
+  SERSurfFrac:
+    plot_name: Surface fraction Ser
+    short_explanation: Fraction of total SASA contributed by serine residues.
+    long_explanation: SASA of all Ser atoms divided by the total SASA. Polar uncharged; hydrogen-bond donor/acceptor.
+    unit: null
+    original_explanation: Fraction of serine on the surface calculated by dividing the serine surface area by the total surface area
+  THRSurfFrac:
+    plot_name: Surface fraction Thr
+    short_explanation: Fraction of total SASA contributed by threonine residues.
+    long_explanation: SASA of all Thr atoms divided by the total SASA. Polar uncharged; like Ser with an extra methyl.
+    unit: null
+    original_explanation: Fraction of threonine on the surface calculated by dividing the threonine surface area by the total surface area
+  TRPSurfFrac:
+    plot_name: Surface fraction Trp
+    short_explanation: Fraction of total SASA contributed by tryptophan residues.
+    long_explanation: SASA of all Trp atoms divided by the total SASA. Large aromatic, mildly hydrophobic, common in HIC binding patches.
+    unit: null
+    original_explanation: Fraction of tryptophane on the surface calculated by dividing the tryptophane surface area by the total surface area
+  TYRSurfFrac:
+    plot_name: Surface fraction Tyr
+    short_explanation: Fraction of total SASA contributed by tyrosine residues.
+    long_explanation: SASA of all Tyr atoms divided by the total SASA. Aromatic with a hydroxyl; weakly titratable (pKa ~10) but normally neutral at chromatography pH.
+    unit: null
+    original_explanation: Fraction of tyrosine on the surface calculated by dividing the tyrosine surface area by the total surface area
+  VALSurfFrac:
+    plot_name: Surface fraction Val
+    short_explanation: Fraction of total SASA contributed by valine residues.
+    long_explanation: SASA of all Val atoms divided by the total SASA. Hydrophobic; together with Leu/Ile reports aliphatic-hydrophobic surface character.
+    unit: null
+    original_explanation: Fraction of valine on the surface calculated by dividing the valine surface area by the total surface area
+  Shape max:
+    plot_name: Shape descriptor (mean/max distance)
+    short_explanation: Mean centre-to-surface distance divided by maximum distance.
+    long_explanation: Defined as mean_dist / max_dist over surface points. Closer to 1 means the surface is roughly equidistant from the centre (sphere-like); much smaller than 1 means the protein is elongated or has long protrusions.
+    unit: null
+    original_explanation: Shape of the protein surface, calculated by dividing the average distance by the maximum distance between the surface points and the protein COM
+  Shape min:
+    plot_name: Shape descriptor (min/mean distance)
+    short_explanation: Minimum centre-to-surface distance divided by the mean.
+    long_explanation: Defined as min_dist / mean_dist. Closer to 1 means there are no deep indentations; values much less than 1 indicate clefts or pockets where the surface comes close to the geometric centre.
+    unit: null
+    original_explanation: Shape of the protein surface, calculated by dividing the minimum distance by the average distance between the surface points and the protein centre of mass (COM)
+  SurfEpMaxFormal:
+    plot_name: Surface EP max (formal)
+    short_explanation: Maximum electrostatic potential over surface points, formal charges.
+    long_explanation: Largest (most positive) electrostatic potential value at any surface grid point, computed by summing Coulombic contributions from titratable atoms using integer formal charges at the operating pH (eps_r = 4, simple distance-weighted Coulomb). Highlights the strongest positive patch.
+    unit: v
+    original_explanation: The maximum observed electrostatic potential calculated using binary charges of +1, 0 or -1
+  SurfEpMinFormal:
+    plot_name: Surface EP min (formal)
+    short_explanation: Minimum (most negative) EP over surface points, formal charges.
+    long_explanation: Smallest (most negative) electrostatic potential at any surface point, formal-charge model. Highlights the strongest negative patch.
+    unit: v
+    original_explanation: The minimum observed electrostatic potential calculated using binary charges of +1, 0 or -1
+  SurfEpMeanFormal:
+    plot_name: Surface EP mean (formal)
+    short_explanation: Mean EP across all surface points, formal charges.
+    long_explanation: Arithmetic mean of the per-point electrostatic potential over the whole solvent-accessible surface, using integer formal charges.
+    unit: v
+    original_explanation: The mean of all electrostatic potentials calculated using binary charges of +1, 0 or -1
+  SurfEpStdFormal:
+    plot_name: Surface EP std (formal)
+    short_explanation: Standard deviation of EP across surface points, formal charges.
+    long_explanation: Spread of the per-point EP distribution. High values indicate a strongly polarised surface (coexisting positive and negative patches).
+    unit: v
+    original_explanation: The standard deviation of the electrostatic potentials calculated using binary charges of +1, 0 or -1
+  NSurfPosEpFormal:
+    plot_name: '# positive-EP surface points (formal)'
+    short_explanation: Number of surface points with positive EP, formal charges.
+    long_explanation: Count of surface grid points whose formal-charge electrostatic potential is strictly greater than 0. A geometric measure of the size of positive patches.
+    unit: v
+    original_explanation: Number of points with a positive electrostatic potential calculated using binary charges of +1, 0 or -1
+  SurfEpPosMeanFormal:
+    plot_name: Mean +EP (formal)
+    short_explanation: Mean EP over positive-EP surface points only, formal charges.
+    long_explanation: Mean of the EP values on points where the formal-charge EP is positive. Characterises the typical strength of positive patches independent of how many there are.
+    unit: v
+    original_explanation: The mean of all positive electrostatic potentials calculated using binary charges of +1, 0 or -1
+  SurfEpPosStdFormal:
+    plot_name: Std +EP (formal)
+    short_explanation: Std of EP over positive-EP points, formal charges.
+    long_explanation: Spread of positive-EP values; high means positive patches contain both mild and strong points.
+    unit: v
+    original_explanation: The standard deviation of the positive electrostatic potentials calculated using binary charges of +1, 0 or -1
+  SurfEpNegMeanFormal:
+    plot_name: Mean -EP (formal)
+    short_explanation: Mean EP over negative-EP points, formal charges.
+    long_explanation: Mean of EP on points where the formal-charge EP is negative. Characteristic intensity of negative patches.
+    unit: v
+    original_explanation: The mean of all negative electrostatic potentials calculated using binary charges of +1, 0 or -1
+  SurfEpNegStdFormal:
+    plot_name: Std -EP (formal)
+    short_explanation: Std of EP over negative-EP points, formal charges.
+    long_explanation: Spread of negative-EP values across the negative subset.
+    unit: v
+    original_explanation: The standard deviation of the negative electrostatic potentials calculated using binary charges of +1, 0 or -1
+  SurfMhpMax:
+    plot_name: Surface MHP max
+    short_explanation: Maximum molecular hydrophobicity potential at any surface point.
+    long_explanation: Largest MHP value, computed by summing scale[residue] * exp(-distance) over heavy atoms within 10 A using the Miyazawa-Jernigan scaled hydrophobicity scale (default). Positive = hydrophobic. Identifies the most hydrophobic spot.
+    unit: null
+    original_explanation: The maximum observed hydrophobicity potential
+  SurfMhpMin:
+    plot_name: Surface MHP min
+    short_explanation: Minimum (most hydrophilic) MHP at any surface point.
+    long_explanation: Smallest MHP value over the surface; most hydrophilic point.
+    unit: null
+    original_explanation: The minimum observed hydrophobicity potential
+  SurfMhpMean:
+    plot_name: Surface MHP mean
+    short_explanation: Mean MHP across all surface points.
+    long_explanation: Arithmetic mean of MHP over the solvent-accessible surface; overall hydrophobic/hydrophilic character.
+    unit: null
+    original_explanation: The mean of all hydrophobicity potentials
+  SurfMhpStd:
+    plot_name: Surface MHP std
+    short_explanation: Standard deviation of MHP across surface points.
+    long_explanation: Spread of MHP; high values indicate strongly amphipathic surfaces with both very hydrophobic and very hydrophilic regions.
+    unit: null
+    original_explanation: The standard deviation of the hydrophobicity potentials
+  NSurfPosMhp:
+    plot_name: '# hydrophobic (MHP>0) surface points'
+    short_explanation: Number of surface points with MHP > 0 (hydrophobic).
+    long_explanation: Count of surface grid points classified as hydrophobic by the MHP scale (positive value). Size of the hydrophobic surface.
+    unit: null
+    original_explanation: Number of points with a positive hydrophobicity potential
+  SurfPosMhpMean:
+    plot_name: Mean MHP (hydrophobic patches)
+    short_explanation: Mean MHP over hydrophobic (positive-MHP) points.
+    long_explanation: Mean of MHP on points where MHP > 0. Intensity of hydrophobic patches independent of their extent.
+    unit: null
+    original_explanation: The mean of all positive hydrophobicity potentials
+  SurfPosMhpStd:
+    plot_name: Std MHP (hydrophobic)
+    short_explanation: Std of MHP over hydrophobic points.
+    long_explanation: Spread of positive-MHP values.
+    unit: null
+    original_explanation: The standard deviation of the positive hydrophobicity potentials
+  SurfNegMhpMean:
+    plot_name: Mean MHP (hydrophilic patches)
+    short_explanation: Mean MHP over hydrophilic points.
+    long_explanation: Mean of MHP on points where MHP < 0; characteristic intensity of hydrophilic regions.
+    unit: null
+    original_explanation: The mean of all negative hydrophobicity potentials
+  SurfNegMhpStd:
+    plot_name: Std MHP (hydrophilic)
+    short_explanation: Std of MHP over hydrophilic points.
+    long_explanation: Spread of negative-MHP values.
+    unit: null
+    original_explanation: The standard deviation of the negative hydrophobicity potentials
+  ShellEpMaxFormal:
+    plot_name: Shell EP max (formal)
+    short_explanation: Maximum shell-projected electrostatic potential, formal charges.
+    long_explanation: ShellEp is computed by placing ~120 Sunflower-distributed reference points around the protein, defining a tangent plane at each, and projecting every charged atom's contribution through the surface onto that plane. The maximum is the strongest positive 'far-field' direction.
+    unit: v
+    original_explanation: The maximum observed shell electrostatic potential calculated using binary charges of +1, 0 or -1
+  ShellEpminFormal:
+    plot_name: Shell EP min (formal)
+    short_explanation: Minimum shell-projected EP, formal charges.
+    long_explanation: Most negative shell-projected EP across the ~120 directions. Note the lowercase 'm' is a quirk of the upstream prodes column name. Identifies the strongest negative far-field direction.
+    unit: v
+    original_explanation: The minimum observed shell electrostatic potential calculated using binary charges of +1, 0 or -1
+  ShellEpMeanFormal:
+    plot_name: Shell EP mean (formal)
+    short_explanation: Mean shell-projected EP across directions.
+    long_explanation: Mean of the per-direction shell EP values; an angularly averaged far-field potential.
+    unit: v
+    original_explanation: The mean of all shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+  ShellEpStdFormal:
+    plot_name: Shell EP std (formal)
+    short_explanation: Std of shell EP across directions.
+    long_explanation: Angular spread of shell-projected EP. High values indicate strong directional anisotropy of the far-field potential (i.e. one face is positive, another negative).
+    unit: v
+    original_explanation: The standard deviation of the shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+  NShellPosEpFormal:
+    plot_name: '# positive shell directions (formal)'
+    short_explanation: Number of shell directions with positive EP.
+    long_explanation: Count of the ~120 shell directions where the projected EP is > 0. Reports how much of the surrounding 'sky' is electropositive.
+    unit: v
+    original_explanation: Number of points with a positive shell electrostatic potential calculated using binary charges of +1, 0 or -1
+  ShellEpPosMeanFormal:
+    plot_name: Mean shell +EP (formal)
+    short_explanation: Mean shell EP over positive directions.
+    long_explanation: Mean shell EP on the subset of directions where it is positive.
+    unit: v
+    original_explanation: The mean of all positive shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+  ShellEpPosStdFormal:
+    plot_name: Std shell +EP (formal)
+    short_explanation: Std of shell EP over positive directions.
+    long_explanation: Spread of positive shell-EP values across directions.
+    unit: v
+    original_explanation: The standard deviation of the positive shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+  ShellEpNegMeanFormal:
+    plot_name: Mean shell -EP (formal)
+    short_explanation: Mean shell EP over negative directions.
+    long_explanation: Mean shell EP on the negative subset.
+    unit: v
+    original_explanation: The mean of all negative shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+  ShellEpNegStdFormal:
+    plot_name: Std shell -EP (formal)
+    short_explanation: Std of shell EP over negative directions.
+    long_explanation: Spread of negative shell-EP values across directions.
+    unit: v
+    original_explanation: The standard deviation of the negative electrostatic potentials calculated using binary charges of +1, 0 or -1

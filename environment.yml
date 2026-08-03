@@ -6,6 +6,13 @@ dependencies:
   - numpy=2.4.6
   - pandas=3.0.3
   - python-dotenv=1.2.2
+  - pyyaml=6.0.3
+  - threadpoolctl=3.6.0
+  # Recommended companion tool, not an import-time dependency: prodes never
+  # imports propka, it reads the .pka files propka writes. Included here because
+  # per-residue pKa prediction is the recommended default workflow (see README),
+  # and asking every user to install it separately just means most of them won't.
+  - propka=3.5.1
   - pip=26.0.1
   - setuptools=82.0.1
   - wheel=0.47.0
