@@ -5,6 +5,8 @@ dependencies:
   - pandas-stubs=3.0.5.260730
   - pytest=9.1.1
   - pytest-cov=7.1.0
-  - flake8=7.3.0
+  - black=26.5.1
+  - ruff=0.15.22
   - mypy=2.1.0
+  - pre-commit=4.6.1
   - tox=4.56.2

@@ -169,6 +169,7 @@ def test_runtime_versions_match():
 
 # -- Dev dependencies: environment_dev.yml vs pyproject.toml --
 
+
 def test_dev_versions_match():
     """Every dev package in pyproject.toml should have the same version in environment.yml + environment_dev.yml."""
     pyproject_dev = _parse_pyproject_dev_deps()
@@ -186,6 +187,7 @@ def test_dev_versions_match():
 
 
 # -- Python version: README.rst + pyproject.toml vs environment.yml --
+
 
 def test_python_version_consistent():
     """The Python version quoted in README.rst and pyproject.toml must agree with environment.yml.
@@ -209,21 +211,14 @@ def test_python_version_consistent():
             mismatches.append(f"README.rst: python={version} vs environment.yml python={env_python}")
 
     requires_python = _parse_requires_python()
-    assert requires_python, (
-        "pyproject.toml requires-python is not a simple '>=X.Y' lower bound; "
-        "update this test to handle the new form."
-    )
+    assert requires_python, "pyproject.toml requires-python is not a simple '>=X.Y' lower bound; " "update this test to handle the new form."
     if not _is_version_prefix(requires_python, env_python):
-        mismatches.append(
-            f"pyproject.toml: requires-python>={requires_python} vs environment.yml python={env_python}"
-        )
+        mismatches.append(f"pyproject.toml: requires-python>={requires_python} vs environment.yml python={env_python}")
 
     classifiers = _parse_python_classifiers()
     assert classifiers, "pyproject.toml has no 'Programming Language :: Python :: X.Y' classifier"
     for version in classifiers:
         if not _is_version_prefix(version, env_python):
-            mismatches.append(
-                f"pyproject.toml: classifier Python :: {version} vs environment.yml python={env_python}"
-            )
+            mismatches.append(f"pyproject.toml: classifier Python :: {version} vs environment.yml python={env_python}")
 
     assert not mismatches, "Python version mismatches:\n" + "\n".join(mismatches)

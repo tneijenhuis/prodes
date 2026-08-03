@@ -11,8 +11,8 @@ def hydrophobic_scale(scale):
     try:
         return data[scale]
 
-    except KeyError:
-        raise KeyError(f"Scale {scale} is not found in the list of hydrophobicity scales")
+    except KeyError as err:
+        raise KeyError(f"Scale {scale} is not found in the list of hydrophobicity scales") from err
 
 
 def residue_data(residue):
@@ -21,11 +21,8 @@ def residue_data(residue):
 
     try:
         return aas[residue]
-    except KeyError:
-        raise KeyError(
-            f"{residue} is not found in the list with residues "
-            "Please make sure you provide the three letter code all caps"
-        )
+    except KeyError as err:
+        raise KeyError(f"{residue} is not found in the list with residues " "Please make sure you provide the three letter code all caps") from err
 
 
 def all_residues():
@@ -40,8 +37,8 @@ def vdw_radius(element):
     try:
         return data["vdw_radius"][element]
 
-    except KeyError:
-        raise KeyError(f"{element} is not found in the list of elements with")
+    except KeyError as err:
+        raise KeyError(f"{element} is not found in the list of elements with") from err
 
 
 def heavy_atom_mass(atom):

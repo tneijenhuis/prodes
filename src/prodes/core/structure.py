@@ -1,4 +1,3 @@
-
 import numpy as np
 
 
@@ -47,7 +46,7 @@ class Structure:
         total_mass = 0.0
         for residue in self.residues:
             total_mass += residue.mass
-# Add the C terminal O to the masses
+        # Add the C terminal O to the masses
         total_mass += 18.01524
 
         return round(total_mass, 2)
@@ -63,7 +62,7 @@ class Structure:
             if round(diff, decimals) == 0:
                 break
 
-            ph = (ph_upper+ph_lower)/2
+            ph = (ph_upper + ph_lower) / 2
             if self.charge(ph, formal=False) < 0:
                 ph_upper = ph
             else:
@@ -137,6 +136,7 @@ class Structure:
         """counts the number of residues on the protein surface using the RSA"""
 
         from prodes.data import all_residues
+
         protein_aa = all_residues.keys()
 
         residue_count = {}
@@ -156,6 +156,7 @@ class Structure:
         """Calculate the residue surface fractions"""
 
         from prodes.data import all_residues
+
         protein_aa = all_residues().keys()
         residue_areas = {}
         for residue in protein_aa:
@@ -167,7 +168,7 @@ class Structure:
         residue_fractions = {}
 
         for residue in residue_areas:
-            residue_fractions[residue] = round(residue_areas[residue]/self.surface_area(r_probe), 3)
+            residue_fractions[residue] = round(residue_areas[residue] / self.surface_area(r_probe), 3)
 
         return residue_fractions
 
@@ -182,14 +183,14 @@ class Structure:
             x = atom.x - self.x
             y = atom.y - self.y
             z = atom.z - self.z
-# Rotate over x
+            # Rotate over x
 
-            y_rotated = y*cos(x_degree) - z*sin(x_degree)
-            z_rotated = y*sin(x_degree) + z*cos(x_degree)
+            y_rotated = y * cos(x_degree) - z * sin(x_degree)
+            z_rotated = y * sin(x_degree) + z * cos(x_degree)
 
-# Rotate over z
-            x_rotated = x*cos(z_degree) - y_rotated*sin(z_degree)
-            y_rotated = x*sin(z_degree) + y_rotated*cos(z_degree)
+            # Rotate over z
+            x_rotated = x * cos(z_degree) - y_rotated * sin(z_degree)
+            y_rotated = x * sin(z_degree) + y_rotated * cos(z_degree)
 
             atom.x = x_rotated + self.x
             atom.y = y_rotated + self.y

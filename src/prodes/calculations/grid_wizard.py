@@ -3,7 +3,7 @@ from math import floor as _floor
 import numpy as np
 
 
-class Grid():
+class Grid:
     """An grid object which is used to divide 3D data into gridcells"""
 
     def __init__(self, size):
@@ -82,8 +82,9 @@ class Grid():
         """Calculates the number of required cells to based on the cell size"""
 
         from math import ceil, floor
+
         minimum, maximum = floor(minimum), ceil(maximum)
-        return ceil((maximum - minimum)/self.size)
+        return ceil((maximum - minimum) / self.size)
 
     def find_start(self, center, shape):
         """finds the x, y and z coordinates of the starting cells"""
@@ -166,9 +167,7 @@ def property_points_on_surface(grid, to_consider="Surface_point"):
 
             for neighbour in surrounding:
                 nid = id(neighbour)
-                if (neighbour.empty == cell.empty
-                        and nid not in done_ids
-                        and nid not in next_todo_ids):
+                if neighbour.empty == cell.empty and nid not in done_ids and nid not in next_todo_ids:
                     next_todo.append(neighbour)
                     next_todo_ids.add(nid)
 

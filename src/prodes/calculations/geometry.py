@@ -24,15 +24,16 @@ class Sunflower_sphere:
         if self._points is None:
 
             from prodes.core.point import Point
+
             indices = np.arange(0, self.n_points, dtype=float) + 0.5
 
-            phi = np.arccos(1 - 2*indices/self.n_points)
+            phi = np.arccos(1 - 2 * indices / self.n_points)
             theta = np.pi * (1 + 5**0.5) * indices
 
             x, y, z = (
                 np.cos(theta) * np.sin(phi) * self.r + self.x,
                 np.sin(theta) * np.sin(phi) * self.r + self.y,
-                np.cos(phi) * self.r + self.z
+                np.cos(phi) * self.r + self.z,
             )
 
             self.angles = np.array([theta, phi])
@@ -49,7 +50,7 @@ class Sunflower_sphere:
 
         if self._raw_coords is None:
             indices = np.arange(0, self.n_points, dtype=float) + 0.5
-            phi = np.arccos(1 - 2*indices/self.n_points)
+            phi = np.arccos(1 - 2 * indices / self.n_points)
             theta = np.pi * (1 + 5**0.5) * indices
             x = np.cos(theta) * np.sin(phi) * self.r + self.x
             y = np.sin(theta) * np.sin(phi) * self.r + self.y
@@ -82,7 +83,7 @@ def move_point(point, origin, magnitude):
     point_vector, origin_vector = make_vector(point), make_vector(origin)
 
     vector = point_vector - origin_vector
-    unit_vector = vector/np.linalg.norm(vector)
+    unit_vector = vector / np.linalg.norm(vector)
     new_vector = unit_vector * magnitude + origin_vector
     point.x, point.y, point.z = new_vector
 
@@ -118,7 +119,7 @@ def required_distance(point_for_plane, structure, surface_coords):
 def project_point(a, b, c, d, x1, y1, z1):
     """projects point 1 onto plane ax+by+cz=-d"""
 
-    k = (d - a * x1-b * y1-c * z1)/(a * a + b * b + c * c)
+    k = (d - a * x1 - b * y1 - c * z1) / (a * a + b * b + c * c)
     x2 = a * k + x1
     y2 = b * k + y1
     z2 = c * k + z1
@@ -133,13 +134,13 @@ def find_exit(point_vector, projected_point_vector, grid):
 
     normal_vector = projected_point_vector - point_vector
     total_distance = np.linalg.norm(normal_vector)
-    direction = normal_vector/total_distance
+    direction = normal_vector / total_distance
     highest = 0
     surface_exit = None
 
     cells = []
-    for i in range(ceil(total_distance)*2):
-        sample_point = point_vector+direction*i/2
+    for i in range(ceil(total_distance) * 2):
+        sample_point = point_vector + direction * i / 2
         cell = grid.in_which_cell(Point(*sample_point))
         if cell not in cells:
             cells.append(cell)
@@ -165,12 +166,12 @@ def find_exit(point_vector, projected_point_vector, grid):
         dot_prod = np.dot(direction, surface_point_vector)
         if dot_prod > 0:
             potential_exit = direction * dot_prod
-            distance = round(np.linalg.norm(potential_exit-surface_point_vector), 1)
+            distance = round(np.linalg.norm(potential_exit - surface_point_vector), 1)
 
             if distance <= 1:
                 if dot_prod > highest:
                     highest = dot_prod
-                    surface_exit = potential_exit+point_vector
+                    surface_exit = potential_exit + point_vector
 
     return surface_exit
 
@@ -194,12 +195,12 @@ def _find_exit_chunk(atom_coords, projected_coords, surface_coords):
     dot_prods -= np.sum(atom_coords * directions, axis=1)[:, None]
 
     # surface_dist_sq: (M, N) — ||surf[n] - atom[m]||² via expansion
-    surface_sq = np.sum(surface_coords ** 2, axis=1)  # (N,)
-    atom_sq = np.sum(atom_coords ** 2, axis=1)        # (M,)
+    surface_sq = np.sum(surface_coords**2, axis=1)  # (N,)
+    atom_sq = np.sum(atom_coords**2, axis=1)  # (M,)
     surface_dist_sq = atom_sq[:, None] + surface_sq[None, :] - 2.0 * (atom_coords @ surface_coords.T)
 
     # perp_dist via Pythagorean decomposition (no (M, N, 3) array needed)
-    perp_dist_sq = surface_dist_sq - dot_prods ** 2
+    perp_dist_sq = surface_dist_sq - dot_prods**2
     np.maximum(perp_dist_sq, 0, out=perp_dist_sq)
     perp_dist = np.sqrt(perp_dist_sq)
 
@@ -254,9 +255,7 @@ def find_exit_batch(atom_coords, projected_coords, surface_coords, mem_limit_mb=
 
     for start in range(0, n_atoms, max_atoms_per_chunk):
         end = min(start + max_atoms_per_chunk, n_atoms)
-        chunk_exits, chunk_has_exit = _find_exit_chunk(
-            atom_coords[start:end], projected_coords[start:end], surface_coords
-        )
+        chunk_exits, chunk_has_exit = _find_exit_chunk(atom_coords[start:end], projected_coords[start:end], surface_coords)
         all_exits[start:end] = chunk_exits
         all_has_exit[start:end] = chunk_has_exit
 
