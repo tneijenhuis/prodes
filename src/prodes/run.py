@@ -27,6 +27,8 @@ def parse_arguments():
     parser.add_argument("--hydro", help="Abriviation of the hydrophobicity scale to be used", type=str, default="mj_scaled")
     parser.add_argument("--full-features", action=argparse.BooleanOptionalAction, default=env_full,
                         help="Calculate the full legacy feature set including redundant features (default: from PRODES_FULL_FEATURES env var)")
+    parser.add_argument("--mem-limit", type=float, default=None,
+                        help="Maximum memory in MB for intermediate NumPy arrays per chunk (default: from PRODES_MEM_LIMIT_MB env var, or 2048)")
 
     arg = parser.parse_args()
 
@@ -37,8 +39,9 @@ def parse_arguments():
     r_probe = arg.probe
     hydro_scale = arg.hydro
     full_features = arg.full_features
+    mem_limit_mb = arg.mem_limit
 
-    return pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale, full_features
+    return pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale, full_features, mem_limit_mb
 
 
 def open_output_file(out_file):
@@ -165,32 +168,32 @@ def calculate_average_chargesurface_grid_features(structure, surface_points, ph,
     return features
 
 
-def calculate_shell_features(structure, surface_points, ph: float, features: dict, numb_of_planes=120, full_features=True):
+def calculate_shell_features(structure, surface_points, ph: float, features: dict, numb_of_planes=120, full_features=True, mem_limit_mb=None):
     """Constructs a number of planes onto which charges are mapped"""
 
     reduced = not full_features
 
     surface_coords = np.array([[p.x, p.y, p.z] for p in surface_points])
-    distributed_points = geometry.Sunflower_sphere(*geometry.make_vector(structure), 1, numb_of_planes).points
+    distributed_points = geometry.Sunflower_sphere(structure.x, structure.y, structure.z, 1, numb_of_planes).points
 
     charged_atoms = [atom for atom in structure.heavy_atoms if atom.charge != 0]
     charged_coords = np.array([[a.x, a.y, a.z] for a in charged_atoms])
     charged_charges = np.array([a.charge(ph) for a in charged_atoms])
 
-    shell_potentials = []
+    shell_potential_values: list[float] = []
     for point in distributed_points:
         distance = geometry.required_distance(point, structure, surface_coords)
         geometry.move_point(point, structure, distance)
 
-        plane = geometry.find_plane(point, structure)
-        projected_coords = geometry.project_point_batch(*plane, charged_coords)
-        exits, has_exit = geometry.find_exit_batch(charged_coords, projected_coords, surface_coords)
+        a, b, c, d = geometry.find_plane(point, structure)
+        projected_coords = geometry.project_point_batch(a, b, c, d, charged_coords)
+        exits, has_exit = geometry.find_exit_batch(charged_coords, projected_coords, surface_coords, mem_limit_mb=mem_limit_mb)
         potentials = geometry.map_ep_to_plane_batch(
             charged_coords, projected_coords, exits, has_exit, charged_charges
         )
-        shell_potentials.append(float(potentials.sum()))
+        shell_potential_values.append(float(potentials.sum()))
 
-    shell_potentials = np.array(shell_potentials)
+    shell_potentials = np.array(shell_potential_values)
 
     features["ShellEpMaxFormal"] = round(shell_potentials.max(), 3)
     features["ShellEpminFormal"] = round(shell_potentials.min(), 3)
@@ -266,7 +269,7 @@ def construct_surface_grid(structure, r_probe):
     return property_points
 
 
-def calculate(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale="mj_scaled", full_features=False):
+def calculate(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale="mj_scaled", full_features=False, mem_limit_mb=None):
     """Calculates a list of supported features and returns a csv file
 
     Arguments
@@ -280,6 +283,10 @@ def calculate(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale
         hydro_scale: the abriviation of the hydrophibicity scale used (scales can be found in data/hydrophobicity)
         full_features: when True, calculates the full legacy 105-feature set including
             redundant features. Defaults to False for the reduced, non-redundant set.
+        mem_limit_mb: Maximum memory in MB for intermediate NumPy arrays per chunk
+            in vectorized calculations. If None, falls back to the PRODES_MEM_LIMIT_MB
+            env var (default 2048). Pass explicitly when calling as a library to avoid
+            relying on environment variables in worker processes.
     """
 
     structure = prepare_structure(pdb_file, pkas_file)
@@ -290,7 +297,7 @@ def calculate(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale
     features = calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, features, full_features=full_features)
     if full_features:
         features = calculate_average_chargesurface_grid_features(structure, surface_points, ph, features)
-    features = calculate_shell_features(structure, surface_points, ph, features, full_features=full_features)
+    features = calculate_shell_features(structure, surface_points, ph, features, full_features=full_features, mem_limit_mb=mem_limit_mb)
 
     calculated_features = pd.Series(features).to_frame().transpose()
 

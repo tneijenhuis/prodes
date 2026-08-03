@@ -1,4 +1,4 @@
-import local_descriptors as ld
+import local_descriptors as ld  # type: ignore[import-not-found]
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -59,7 +59,8 @@ for atom in np.array([atom for atom in structure.atoms if atom.charge() != 0]):
                 if dot_prod > highest:
                     highest = dot_prod
     print(highest)
-    to_plot.append(Property_point(*projected_point, -4))
+    px, py, pz = projected_point
+    to_plot.append(Property_point(px, py, pz, -4))
 #     dummy = Builder().build_dummy_atom(*projected_point)
 #     projected_points.append(dummy)
 
