@@ -30,6 +30,7 @@ class Residue:
     def pkas(self):
         if self._pka is None:
             from prodes import data
+
             pka = data.residue_data(self.name)["pka"]
             pkas = []
             if pka is not None:
@@ -48,6 +49,7 @@ class Residue:
         """returns the mass"""
 
         from prodes.data import residue_data
+
         return residue_data(self.name)["mass"]
 
     def charge(self, ph, formal=True):
@@ -64,6 +66,7 @@ class Residue:
 
         from prodes.calculations.standard_equations import neg_charge, pos_charge
         from prodes.data import residue_data
+
         charged_atoms = []
         if self.pkas:
 
@@ -82,7 +85,7 @@ class Residue:
                             charged = residue_data(key)["charged_atoms"]
                             if atom.name in charged:
                                 charged_atoms.append(atom)
-                                atom._charge = charge/len(charged)
+                                atom._charge = charge / len(charged)
                 else:
                     charge = pos_charge(pka_value, ph)
                     if key == "-N" or key == "N+":
@@ -95,7 +98,7 @@ class Residue:
                             charged = residue_data(key)["charged_atoms"]
                             if atom.name in charged:
                                 charged_atoms.append(atom)
-                                atom._charge = charge/len(charged)
+                                atom._charge = charge / len(charged)
         return charged_atoms
 
     def area(self, probe_r=1.4):
@@ -118,6 +121,7 @@ class Residue:
 
         else:
             from prodes.data import residue_data
+
             gly_x_gly = residue_data["gly_x_gly"]
             area = self.area(probe_r)
             return area / gly_x_gly

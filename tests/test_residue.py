@@ -41,72 +41,26 @@ def test_attributes():
 def test_heavy_atoms():
     """tests if correct heavy atoms are called"""
 
-    ala_heavies = [
-        'N', 'CA', 'C', 'O', 'CB'
-    ]
-    arg_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG',
-        'CD', 'NE', 'CZ', 'NH1', 'NH2'
-    ]
-    asn_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'ND2', 'OD1'
-    ]
-    asp_heavies = [
-        'N', 'CA', 'C', 'O', 'CB',
-        'CG', 'OD1', 'OD2'
-    ]
-    cys_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'SG'
-    ]
-    gln_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'CD', 'NE2', 'OE1'
-    ]
-    glu_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'CD', 'OE1', 'OE2'
-    ]
-    gly_heavies = [
-        'N', 'CA', 'C', 'O'
-    ]
-    his_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'CD2', 'ND1',
-        'CE1', 'NE2'
-    ]
-    ile_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG1', 'CG2', 'CD1'
-    ]
-    leu_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'CD1', 'CD2'
-    ]
-    lys_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'CD', 'CE', 'NZ'
-    ]
-    met_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'SD', 'CE'
-    ]
-    phe_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'CD1', 'CD2',
-        'CE1', 'CE2', 'CZ'
-    ]
-    pro_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'CD'
-    ]
-    ser_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'OG'
-    ]
-    thr_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG2', 'OG1'
-    ]
-    trp_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'CD1', 'CD2',
-        'CE2', 'CE3', 'NE1', 'CZ2', 'CZ3', 'CH2'
-    ]
-    tyr_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG', 'CD1', 'CD2',
-        'CE1', 'CE2', 'CZ', 'OH'
-    ]
-    val_heavies = [
-        'N', 'CA', 'C', 'O', 'CB', 'CG1', 'CG2'
-    ]
+    ala_heavies = ["N", "CA", "C", "O", "CB"]
+    arg_heavies = ["N", "CA", "C", "O", "CB", "CG", "CD", "NE", "CZ", "NH1", "NH2"]
+    asn_heavies = ["N", "CA", "C", "O", "CB", "CG", "ND2", "OD1"]
+    asp_heavies = ["N", "CA", "C", "O", "CB", "CG", "OD1", "OD2"]
+    cys_heavies = ["N", "CA", "C", "O", "CB", "SG"]
+    gln_heavies = ["N", "CA", "C", "O", "CB", "CG", "CD", "NE2", "OE1"]
+    glu_heavies = ["N", "CA", "C", "O", "CB", "CG", "CD", "OE1", "OE2"]
+    gly_heavies = ["N", "CA", "C", "O"]
+    his_heavies = ["N", "CA", "C", "O", "CB", "CG", "CD2", "ND1", "CE1", "NE2"]
+    ile_heavies = ["N", "CA", "C", "O", "CB", "CG1", "CG2", "CD1"]
+    leu_heavies = ["N", "CA", "C", "O", "CB", "CG", "CD1", "CD2"]
+    lys_heavies = ["N", "CA", "C", "O", "CB", "CG", "CD", "CE", "NZ"]
+    met_heavies = ["N", "CA", "C", "O", "CB", "CG", "SD", "CE"]
+    phe_heavies = ["N", "CA", "C", "O", "CB", "CG", "CD1", "CD2", "CE1", "CE2", "CZ"]
+    pro_heavies = ["N", "CA", "C", "O", "CB", "CG", "CD"]
+    ser_heavies = ["N", "CA", "C", "O", "CB", "OG"]
+    thr_heavies = ["N", "CA", "C", "O", "CB", "CG2", "OG1"]
+    trp_heavies = ["N", "CA", "C", "O", "CB", "CG", "CD1", "CD2", "CE2", "CE3", "NE1", "CZ2", "CZ3", "CH2"]
+    tyr_heavies = ["N", "CA", "C", "O", "CB", "CG", "CD1", "CD2", "CE1", "CE2", "CZ", "OH"]
+    val_heavies = ["N", "CA", "C", "O", "CB", "CG1", "CG2"]
 
     assert [atom.name for atom in residues["ALA"].heavy_atoms] == ala_heavies
     assert [atom.name for atom in residues["ARG"].heavy_atoms] == arg_heavies
@@ -133,75 +87,26 @@ def test_heavy_atoms():
 def test_protons():
     """Tests if correct protons are called"""
 
-    ala_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H12'
-    ]
-    arg_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07',
-        'H08', 'H09', 'H10', 'H11', 'H12', 'H13'
-    ]
-    asn_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06'
-    ]
-    asp_protons = [
-        'H01', 'H02', 'H03', 'H10'
-    ]
-    cys_protons = [
-        'H01', 'H02', 'H03', 'H14'
-    ]
-    gln_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H09'
-    ]
-    glu_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H09'
-    ]
-    gly_protons = [
-        'H01', 'H02', 'H11'
-    ]
-    his_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07'
-    ]
-    ile_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07',
-        'H08', 'H09', 'H10', 'H11'
-    ]
-    leu_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07',
-        'H08', 'H09', 'H10', 'H11'
-    ]
-    lys_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07',
-        'H08', 'H09', 'H10', 'H11', 'H12', 'H13'
-    ]
-    met_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07',
-        'H08', 'H09'
-    ]
-    phe_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07',
-        'H08', 'H09'
-    ]
-    pro_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07'
-    ]
-    ser_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H12'
-    ]
-    thr_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H14'
-    ]
-    trp_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07',
-        'H08', 'H09', 'H10'
-    ]
-    tyr_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07',
-        'H08', 'H09'
-    ]
-    val_protons = [
-        'H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07',
-        'H08', 'H15'
-    ]
+    ala_protons = ["H01", "H02", "H03", "H04", "H12"]
+    arg_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09", "H10", "H11", "H12", "H13"]
+    asn_protons = ["H01", "H02", "H03", "H04", "H05", "H06"]
+    asp_protons = ["H01", "H02", "H03", "H10"]
+    cys_protons = ["H01", "H02", "H03", "H14"]
+    gln_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H09"]
+    glu_protons = ["H01", "H02", "H03", "H04", "H05", "H09"]
+    gly_protons = ["H01", "H02", "H11"]
+    his_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07"]
+    ile_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09", "H10", "H11"]
+    leu_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09", "H10", "H11"]
+    lys_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09", "H10", "H11", "H12", "H13"]
+    met_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09"]
+    phe_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09"]
+    pro_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07"]
+    ser_protons = ["H01", "H02", "H03", "H04", "H12"]
+    thr_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H14"]
+    trp_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09", "H10"]
+    tyr_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09"]
+    val_protons = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H15"]
 
     assert [atom.name for atom in residues["ALA"].protons] == ala_protons
     assert [atom.name for atom in residues["ARG"].protons] == arg_protons
@@ -228,28 +133,28 @@ def test_protons():
 def test_pkas():
     """tests weither the correct pka is assigned"""
 
-# testing side chain PKAs
-    assert residues['ALA'].pkas is None
-    assert residues['ARG'].pkas == [{"ARG": 13.8}]
-    assert residues['ASN'].pkas is None
-    assert residues['ASP'].pkas == [{"ASP": 3.86}]
-    assert residues['CYS'].pkas == [{"CYS": 8.33}]
-    assert residues['GLN'].pkas is None
-    assert residues['GLU'].pkas == [{"GLU": 4.25}]
-    assert residues['GLY'].pkas is None
-    assert residues['HIS'].pkas == [{"HIS": 6.00}]
-    assert residues['ILE'].pkas is None
-    assert residues['LYS'].pkas == [{"LYS": 10.5}]
-    assert residues['MET'].pkas is None
-    assert residues['PHE'].pkas is None
-    assert residues['PRO'].pkas is None
-    assert residues['SER'].pkas is None
-    assert residues['THR'].pkas is None
-    assert residues['TRP'].pkas is None
-    assert residues['TYR'].pkas == [{"TYR": 10.0}]
-    assert residues['VAL'].pkas is None
+    # testing side chain PKAs
+    assert residues["ALA"].pkas is None
+    assert residues["ARG"].pkas == [{"ARG": 13.8}]
+    assert residues["ASN"].pkas is None
+    assert residues["ASP"].pkas == [{"ASP": 3.86}]
+    assert residues["CYS"].pkas == [{"CYS": 8.33}]
+    assert residues["GLN"].pkas is None
+    assert residues["GLU"].pkas == [{"GLU": 4.25}]
+    assert residues["GLY"].pkas is None
+    assert residues["HIS"].pkas == [{"HIS": 6.00}]
+    assert residues["ILE"].pkas is None
+    assert residues["LYS"].pkas == [{"LYS": 10.5}]
+    assert residues["MET"].pkas is None
+    assert residues["PHE"].pkas is None
+    assert residues["PRO"].pkas is None
+    assert residues["SER"].pkas is None
+    assert residues["THR"].pkas is None
+    assert residues["TRP"].pkas is None
+    assert residues["TYR"].pkas == [{"TYR": 10.0}]
+    assert residues["VAL"].pkas is None
 
-# testing the N and C terminus pka
+    # testing the N and C terminus pka
     assert n_term.pkas == [{"LYS": 10.5}, {"N+": 9.69}]
     assert c_term.pkas == [{"C-": 2.34}]
 
@@ -257,35 +162,35 @@ def test_pkas():
 def test_charge():
     """tests if the correct charge is returned"""
 
-# no charge
-    assert residues['ALA'].charge(7) == 0
-    assert round(residues['ARG'].charge(14), 3) == 0
-    assert residues['ASN'].charge(7) == 0
-    assert round(residues['ASP'].charge(3), 3) == 0
-    assert round(residues['CYS'].charge(8), 3) == 0
-    assert residues['GLN'].charge(7) == 0
-    assert round(residues['GLU'].charge(4), 3) == 0
-    assert residues['GLY'].charge(7) == 0
-    assert round(residues['HIS'].charge(7), 3) == 0
-    assert residues['ILE'].charge(7) == 0
-    assert round(residues['LYS'].charge(11), 3) == 0
-    assert residues['MET'].charge(7) == 0
-    assert residues['PHE'].charge(7) == 0
-    assert residues['PRO'].charge(7) == 0
-    assert residues['SER'].charge(7) == 0
-    assert residues['THR'].charge(7) == 0
-    assert residues['TRP'].charge(7) == 0
-    assert round(residues['TYR'].charge(7), 3) == 0
-    assert residues['VAL'].charge(7) == 0
+    # no charge
+    assert residues["ALA"].charge(7) == 0
+    assert round(residues["ARG"].charge(14), 3) == 0
+    assert residues["ASN"].charge(7) == 0
+    assert round(residues["ASP"].charge(3), 3) == 0
+    assert round(residues["CYS"].charge(8), 3) == 0
+    assert residues["GLN"].charge(7) == 0
+    assert round(residues["GLU"].charge(4), 3) == 0
+    assert residues["GLY"].charge(7) == 0
+    assert round(residues["HIS"].charge(7), 3) == 0
+    assert residues["ILE"].charge(7) == 0
+    assert round(residues["LYS"].charge(11), 3) == 0
+    assert residues["MET"].charge(7) == 0
+    assert residues["PHE"].charge(7) == 0
+    assert residues["PRO"].charge(7) == 0
+    assert residues["SER"].charge(7) == 0
+    assert residues["THR"].charge(7) == 0
+    assert residues["TRP"].charge(7) == 0
+    assert round(residues["TYR"].charge(7), 3) == 0
+    assert residues["VAL"].charge(7) == 0
     assert round(n_term.charge(11), 3) == 0
     assert round(c_term.charge(1), 3) == -0
-# Positive charge
+    # Positive charge
     assert round(residues["ARG"].charge(12), 3) == 1
     assert round(residues["LYS"].charge(10), 3) == 1
     assert round(n_term.charge(7), 3) == 2
     assert round(n_term.charge(10), 3) == 1
     assert round(residues["HIS"].charge(5), 3) == 1
-# Negative charge
+    # Negative charge
     assert round(residues["GLU"].charge(5), 3) == -1
     assert round(residues["ASP"].charge(14), 3) == -1
     assert round(residues["TYR"].charge(14), 3) == -1
@@ -296,23 +201,23 @@ def test_charge():
 def test_mass():
     """Tests amino acid masses"""
 
-    assert residues['ALA'].mass == 71.0788
-    assert residues['ARG'].mass == 156.1875
-    assert residues['ASN'].mass == 114.1038
-    assert residues['ASP'].mass == 115.0886
-    assert residues['CYS'].mass == 103.1388
-    assert residues['GLN'].mass == 128.1307
-    assert residues['GLU'].mass == 129.1155
-    assert residues['GLY'].mass == 57.0519
-    assert residues['HIS'].mass == 137.1411
-    assert residues['ILE'].mass == 113.1594
-    assert residues['LEU'].mass == 113.1594
-    assert residues['LYS'].mass == 128.1741
-    assert residues['MET'].mass == 131.1926
-    assert residues['PHE'].mass == 147.1766
-    assert residues['PRO'].mass == 97.1167
-    assert residues['SER'].mass == 87.0782
-    assert residues['THR'].mass == 101.1051
-    assert residues['TRP'].mass == 186.2132
-    assert residues['TYR'].mass == 163.1760
-    assert residues['VAL'].mass == 99.1326
+    assert residues["ALA"].mass == 71.0788
+    assert residues["ARG"].mass == 156.1875
+    assert residues["ASN"].mass == 114.1038
+    assert residues["ASP"].mass == 115.0886
+    assert residues["CYS"].mass == 103.1388
+    assert residues["GLN"].mass == 128.1307
+    assert residues["GLU"].mass == 129.1155
+    assert residues["GLY"].mass == 57.0519
+    assert residues["HIS"].mass == 137.1411
+    assert residues["ILE"].mass == 113.1594
+    assert residues["LEU"].mass == 113.1594
+    assert residues["LYS"].mass == 128.1741
+    assert residues["MET"].mass == 131.1926
+    assert residues["PHE"].mass == 147.1766
+    assert residues["PRO"].mass == 97.1167
+    assert residues["SER"].mass == 87.0782
+    assert residues["THR"].mass == 101.1051
+    assert residues["TRP"].mass == 186.2132
+    assert residues["TYR"].mass == 163.1760
+    assert residues["VAL"].mass == 99.1326

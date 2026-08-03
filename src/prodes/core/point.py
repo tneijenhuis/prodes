@@ -12,8 +12,9 @@ class Point:
     z: float
 
 
-class Surface_point():
+class Surface_point:
     """Class for points which represent the surface sphere of an atom"""
+
     def __init__(self, x, y, z, atom):
         self.x = x
         self.y = y
@@ -21,7 +22,7 @@ class Surface_point():
         self.atom = atom
 
 
-class Property_point():
+class Property_point:
     """Class which represents the the points onto which properties are projected"""
 
     def __init__(self, x, y, z, ep=None, lipo=None):
@@ -64,7 +65,7 @@ class Property_point():
         charges = np.array([a.charge(ph=ph, formal=formal) for a in charged])
         point_coord = np.array([self.x, self.y, self.z])
 
-        dists = np.sqrt(np.sum((coords - point_coord)**2, axis=1))
+        dists = np.sqrt(np.sum((coords - point_coord) ** 2, axis=1))
         mask = dists <= cutoff
         if not np.any(mask):
             self.__ep = 0
@@ -93,7 +94,7 @@ class Property_point():
         coords = np.array([[a.x, a.y, a.z] for a in non_h])
         point_coord = np.array([self.x, self.y, self.z])
 
-        dists = np.sqrt(np.sum((coords - point_coord)**2, axis=1))
+        dists = np.sqrt(np.sum((coords - point_coord) ** 2, axis=1))
         mask = dists <= cutoff
         if not np.any(mask):
             self.__lipo = 0
@@ -101,15 +102,12 @@ class Property_point():
 
         dists_masked = dists[mask]
         atoms_masked = [a for a, m in zip(non_h, mask) if m]
-        contributions = np.array([
-            1.0 if a.name == "OXT" else scale_dict[a.residue_name]
-            for a in atoms_masked
-        ])
+        contributions = np.array([1.0 if a.name == "OXT" else scale_dict[a.residue_name] for a in atoms_masked])
         lipophilicity = float(np.sum(contributions * np.exp(-dists_masked)))
         self.__lipo = lipophilicity
 
 
-class Cell():
+class Cell:
     """Class which represents the the points onto which properties are projected"""
 
     def __init__(self, size, x, y, z):

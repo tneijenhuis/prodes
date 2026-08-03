@@ -4,9 +4,23 @@ from prodes import data
 class Atom:
     """Contains all information of each atom from the PDB file"""
 
-    def __init__(self, identifier, name, residue_name, chain_name, residue_number, x, y, z,
-                 segment_id="", element=None, structure=None, chain=None,
-                 residue=None, _charge=None):
+    def __init__(
+        self,
+        identifier,
+        name,
+        residue_name,
+        chain_name,
+        residue_number,
+        x,
+        y,
+        z,
+        segment_id="",
+        element=None,
+        structure=None,
+        chain=None,
+        residue=None,
+        _charge=None,
+    ):
 
         self.identifier = identifier
         self.name = name
@@ -65,22 +79,22 @@ class Atom:
                 if formal is True:
                     if potential_charge > 0:
                         if list(self.residue.pkas[0].values())[0] > ph:
-                            charge = 1/len(residue_data["charged_atoms"])
+                            charge = 1 / len(residue_data["charged_atoms"])
                         else:
                             charge = 0
 
                     elif potential_charge < 0:
                         if list(self.residue.pkas[0].values())[0] < ph:
-                            charge = -1/len(residue_data["charged_atoms"])
+                            charge = -1 / len(residue_data["charged_atoms"])
                         else:
                             charge = 0
 
                 else:
                     if potential_charge > 0:
-                        charge = pos_charge(list(self.residue.pkas[0].values())[0], ph)/len(residue_data["charged_atoms"])
+                        charge = pos_charge(list(self.residue.pkas[0].values())[0], ph) / len(residue_data["charged_atoms"])
 
                     else:
-                        charge = neg_charge(list(self.residue.pkas[0].values())[0], ph)/len(residue_data["charged_atoms"])
+                        charge = neg_charge(list(self.residue.pkas[0].values())[0], ph) / len(residue_data["charged_atoms"])
 
         if self.name == self.residue.terminus:
 
@@ -147,11 +161,11 @@ class Atom:
         from math import pi
 
         r = self.radius + probe_r
-        return (4 * pi * (r**2))
+        return 4 * pi * (r**2)
 
     def max_n_points(self, probe_r=1.4, points_per_a=2):
         area = self.max_area(probe_r=probe_r)
-        return int(area*points_per_a)
+        return int(area * points_per_a)
 
     def surface_area(self, probe_r=1.4, points_per_a=2):
         """calculates the surface area"""
@@ -163,4 +177,4 @@ class Atom:
             n_surf_points = len(self.cloud)
             max_area = self.max_area(probe_r=probe_r)
             max_n_points = self.max_n_points(probe_r=probe_r, points_per_a=points_per_a)
-            return max_area/max_n_points*n_surf_points
+            return max_area / max_n_points * n_surf_points

@@ -49,7 +49,7 @@ def test_max_area():
     assert n_atom.max_area() == 105.68317686676065
     assert o_atom.max_area() == 98.5203456165759
     assert s_atom.max_area() == 132.73228961416876
-# Try a different probe radius
+    # Try a different probe radius
     assert c_atom.max_area(2) == 201.06192982974676
 
 
@@ -61,7 +61,7 @@ def test_max_n_points():
     assert n_atom.max_n_points() == 211
     assert o_atom.max_n_points() == 197
     assert s_atom.max_n_points() == 265
-# Try a different probe radius
+    # Try a different probe radius
     assert c_atom.max_n_points(2) == 402
 
 
@@ -69,6 +69,7 @@ def test_surface_area():
     """tests if surface area returns an error if no surface has been calculated"""
 
     from prodes.core.structure import Structure
+
     c_atom.structure = Structure()
     with pytest.raises(NameError):
         c_atom.surface_area()

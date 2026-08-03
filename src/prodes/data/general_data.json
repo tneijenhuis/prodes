@@ -1,4 +1,4 @@
-{    
+{
     "residues":{
         "ALA":{
             "letter": "A",
@@ -26,7 +26,7 @@
             "charged_atoms": null,
             "aromatic_carbons": [],
             "gly_x_gly": 195.0
-        },   
+        },
         "ASP": {
             "letter": "D",
             "mass": 115.0886,
@@ -124,7 +124,7 @@
             "pka": null,
             "charged_atoms": null,
             "aromatic_carbons": ["CG", "CD1", "CD2", "CE1", "CE2", "CZ"],
-            "gly_x_gly": 240.0            
+            "gly_x_gly": 240.0
         },
         "PRO": {
             "letter": "P",
@@ -182,7 +182,7 @@
         }
     },
     "N_term_pka": 9.69,
-    "C_term_pka": 2.34, 
+    "C_term_pka": 2.34,
 
     "heavy_atom_masses": {
         "C": 12.0107,
@@ -200,5 +200,5 @@
         "N": 1.50,
         "S": 1.85
     }
-    
+
 }

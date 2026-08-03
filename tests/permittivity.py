@@ -1,7 +1,7 @@
-import local_descriptors as ld  # type: ignore[import-not-found]
 import matplotlib.pyplot as plt
 import numpy as np
 
+import local_descriptors as ld  # type: ignore[import-not-found]
 from prodes.calculations.grid_wizard import Grid, property_points_on_surface
 from prodes.calculations.sasa import shrake_rupley
 from prodes.core.point import Point, Property_point
@@ -33,7 +33,7 @@ for point in property_points:
 # write_pdb(surf_struct, f"1GDW_surf.pdb")
 
 
-point = Point(structure.x, structure.y, structure.z-1)
+point = Point(structure.x, structure.y, structure.z - 1)
 distance = ld.required_distance(point, structure, surface)
 ld.move_point(point, structure, distance)
 
@@ -49,11 +49,11 @@ for atom in np.array([atom for atom in structure.atoms if atom.charge() != 0]):
     for surface_point in property_points:
 
         surface_point_vector = ld.make_vector(surface_point) - atom_vector
-        dot_prod = np.dot(normal_vector/np.linalg.norm(normal_vector), surface_point_vector)
+        dot_prod = np.dot(normal_vector / np.linalg.norm(normal_vector), surface_point_vector)
         if dot_prod > 0:
 
-            potential_pass = normal_vector/np.linalg.norm(normal_vector)
-            distance = np.linalg.norm(potential_pass-surface_point_vector)
+            potential_pass = normal_vector / np.linalg.norm(normal_vector)
+            distance = np.linalg.norm(potential_pass - surface_point_vector)
 
             if distance < 2:
                 if dot_prod > highest:
@@ -70,8 +70,14 @@ for atom in np.array([atom for atom in structure.atoms if atom.charge() != 0]):
 fig = plt.figure()
 ax = fig.add_subplot(projection="3d")
 
-f = ax.scatter3D([point.x for point in to_plot], [point.y for point in to_plot], [
-                 point.z for point in to_plot], c=[point.ep for point in to_plot], cmap='coolwarm', s=1)
+f = ax.scatter3D(
+    [point.x for point in to_plot],
+    [point.y for point in to_plot],
+    [point.z for point in to_plot],
+    c=[point.ep for point in to_plot],
+    cmap="coolwarm",
+    s=1,
+)
 fig.colorbar(f, ax=ax)
-plt.axis('off')
+plt.axis("off")
 plt.savefig("splane.png", dpi=300)

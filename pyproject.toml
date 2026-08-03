@@ -35,9 +35,11 @@ Repository = "https://github.com/datacatalysis/prodes"
 dev = [
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
-    "flake8==7.3.0",
+    "black==26.5.1",
+    "ruff==0.15.22",
     "mypy==2.1.0",
     "pandas-stubs==3.0.5.260730",
+    "pre-commit==4.6.1",
     "sphinx==8.2.3",
     "tox==4.56.2",
 ]
@@ -50,3 +52,24 @@ prodes = ["data/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.black]
+line-length = 160
+target-version = ["py313"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 160
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501", "B905"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+allow_untyped_globals = true

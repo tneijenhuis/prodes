@@ -58,9 +58,7 @@ def test_all_columns_present():
     """Every column in the original output should appear in the calculated output."""
     calc_cols = set(FULL_OUTPUT.columns)
     orig_cols = set(ORIGINAL_OUTPUT.columns)
-    assert calc_cols == orig_cols, (
-        f"Column mismatch: missing={orig_cols - calc_cols}, extra={calc_cols - orig_cols}"
-    )
+    assert calc_cols == orig_cols, f"Column mismatch: missing={orig_cols - calc_cols}, extra={calc_cols - orig_cols}"
 
 
 def test_feature_values_match_original():
@@ -81,58 +79,103 @@ def test_feature_values_match_original():
             tolerance = 0.01
 
         if abs(calc_val - orig_val) > tolerance:
-            mismatches.append(
-                f"{col}: orig={orig_val}, calc={calc_val}, "
-                f"diff={abs(calc_val - orig_val):.6f}, tol={tolerance}"
-            )
+            mismatches.append(f"{col}: orig={orig_val}, calc={calc_val}, " f"diff={abs(calc_val - orig_val):.6f}, tol={tolerance}")
 
-    assert len(mismatches) == 0, (
-        f"Value mismatches for {len(mismatches)} columns:\n"
-        + "\n".join(mismatches[:20])
-    )
+    assert len(mismatches) == 0, f"Value mismatches for {len(mismatches)} columns:\n" + "\n".join(mismatches[:20])
 
 
 # Features that should be present in both full and reduced sets
 REDUCED_PRESENT = {
-    "Molecular weight", "Isoelectric point", "Dipole", "Formal charge",
-    "Area", "Shape max", "Shape min",
-    "SurfEpMaxFormal", "SurfEpMinFormal",
-    "SurfEpMeanFormal", "SurfEpStdFormal",
-    "NSurfPosEpFormal", "NSurfNegEpFormal",
-    "SurfEpPosMeanFormal", "SurfEpPosStdFormal",
-    "SurfEpNegMeanFormal", "SurfEpNegStdFormal",
-    "SurfMhpMax", "SurfMhpMin", "SurfMhpMean", "SurfMhpStd",
-    "NSurfPosMhp", "NSurfNegMhp",
-    "SurfPosMhpMean", "SurfPosMhpStd",
-    "SurfNegMhpMean", "SurfNegMhpStd",
-    "ShellEpMaxFormal", "ShellEpminFormal",
-    "ShellEpMeanFormal", "ShellEpStdFormal",
+    "Molecular weight",
+    "Isoelectric point",
+    "Dipole",
+    "Formal charge",
+    "Area",
+    "Shape max",
+    "Shape min",
+    "SurfEpMaxFormal",
+    "SurfEpMinFormal",
+    "SurfEpMeanFormal",
+    "SurfEpStdFormal",
+    "NSurfPosEpFormal",
+    "NSurfNegEpFormal",
+    "SurfEpPosMeanFormal",
+    "SurfEpPosStdFormal",
+    "SurfEpNegMeanFormal",
+    "SurfEpNegStdFormal",
+    "SurfMhpMax",
+    "SurfMhpMin",
+    "SurfMhpMean",
+    "SurfMhpStd",
+    "NSurfPosMhp",
+    "NSurfNegMhp",
+    "SurfPosMhpMean",
+    "SurfPosMhpStd",
+    "SurfNegMhpMean",
+    "SurfNegMhpStd",
+    "ShellEpMaxFormal",
+    "ShellEpminFormal",
+    "ShellEpMeanFormal",
+    "ShellEpStdFormal",
     "NShellPosEpFormal",
-    "ShellEpPosMeanFormal", "ShellEpPosStdFormal",
-    "ShellEpNegMeanFormal", "ShellEpNegStdFormal",
+    "ShellEpPosMeanFormal",
+    "ShellEpPosStdFormal",
+    "ShellEpNegMeanFormal",
+    "ShellEpNegStdFormal",
 }
 
 # Features dropped in reduced mode (redundant with others at R² >= 0.95)
 REDUCED_ABSENT = {
-    "Average charge", "NSurfPoints",
-    "SurfEpTrimeanFormal", "SurfEpMedianFormal", "SurfEpSumFormal",
-    "SurfEpPosTrimeanFormal", "SurfEpPosMedianFormal", "SurfEpPosSumFormal",
-    "SurfEpNegTrimeanFormal", "SurfEpNegMedianFormal", "SurfEpNegSumFormal",
-    "SurfMhpTrimean", "SurfMhpMedian", "SurfMhpSum",
-    "SurfPosMhpTrimean", "SurfPosMhpMedian", "SurfPosMhpSum",
-    "SurfNegMhpTrimean", "SurfNegMhpMedian", "SurfNegMhpSum",
-    "ShellEpTrimeanFormal", "ShellEpMedianFormal", "ShellEpSumFormal",
-    "ShellEpPosTrimeanFormal", "ShellEpPosMedianFormal", "ShellEpPosSumFormal",
-    "ShellEpNegTrimeanFormal", "ShellEpNegMedianFormal", "ShellEpNegSumFormal",
+    "Average charge",
+    "NSurfPoints",
+    "SurfEpTrimeanFormal",
+    "SurfEpMedianFormal",
+    "SurfEpSumFormal",
+    "SurfEpPosTrimeanFormal",
+    "SurfEpPosMedianFormal",
+    "SurfEpPosSumFormal",
+    "SurfEpNegTrimeanFormal",
+    "SurfEpNegMedianFormal",
+    "SurfEpNegSumFormal",
+    "SurfMhpTrimean",
+    "SurfMhpMedian",
+    "SurfMhpSum",
+    "SurfPosMhpTrimean",
+    "SurfPosMhpMedian",
+    "SurfPosMhpSum",
+    "SurfNegMhpTrimean",
+    "SurfNegMhpMedian",
+    "SurfNegMhpSum",
+    "ShellEpTrimeanFormal",
+    "ShellEpMedianFormal",
+    "ShellEpSumFormal",
+    "ShellEpPosTrimeanFormal",
+    "ShellEpPosMedianFormal",
+    "ShellEpPosSumFormal",
+    "ShellEpNegTrimeanFormal",
+    "ShellEpNegMedianFormal",
+    "ShellEpNegSumFormal",
     "NShellNegEpFormal",
     # Entire Average-charge surface EP block is skipped
-    "SurfEpMaxAverage", "SurfEpMinAverage",
-    "SurfEpMeanAverage", "SurfEpTrimeanAverage", "SurfEpMedianAverage",
-    "SurfEpSumAverage", "SurfEpStdAverage",
-    "NSurfPosEpAverage", "SurfEpPosMeanAverage", "SurfEpPosTrimeanAverage",
-    "SurfEpPosMedianAverage", "SurfEpPosSumAverage", "SurfEpPosStdAverage",
-    "NSurfNegEpAverage", "SurfEpNegMeanAverage", "SurfEpNegTrimeanAverage",
-    "SurfEpNegMedianAverage", "SurfEpNegSumAverage", "SurfEpNegStdAverage",
+    "SurfEpMaxAverage",
+    "SurfEpMinAverage",
+    "SurfEpMeanAverage",
+    "SurfEpTrimeanAverage",
+    "SurfEpMedianAverage",
+    "SurfEpSumAverage",
+    "SurfEpStdAverage",
+    "NSurfPosEpAverage",
+    "SurfEpPosMeanAverage",
+    "SurfEpPosTrimeanAverage",
+    "SurfEpPosMedianAverage",
+    "SurfEpPosSumAverage",
+    "SurfEpPosStdAverage",
+    "NSurfNegEpAverage",
+    "SurfEpNegMeanAverage",
+    "SurfEpNegTrimeanAverage",
+    "SurfEpNegMedianAverage",
+    "SurfEpNegSumAverage",
+    "SurfEpNegStdAverage",
 }
 
 

@@ -68,7 +68,7 @@ class PDBparser:
         structure.atoms = np.concatenate((structure.atoms, addarray))
         atom.structure = structure
 
-# Find the chain of the atom
+        # Find the chain of the atom
         if atom.chain_name not in self.chain_names:
             if len(self.chain_names) != 0:
                 self.current_chain.residues[-1].terminus = "C"
@@ -80,7 +80,7 @@ class PDBparser:
         atom.chain = self.current_chain
         self._add_atom_to_chain(atom, self.current_chain)
 
-# Find the residue of the atom
+        # Find the residue of the atom
         if atom.residue_number not in self.residue_numbers[self.current_chain.name]:
             self.current_residue = self._make_new_residue(structure, atom)
 
@@ -120,7 +120,7 @@ class PDBparser:
         return self.current_residue
 
     def _add_residue_to_structure(self, residue, structure):
-        """"adds residue to a structure"""
+        """ "adds residue to a structure"""
 
         addarray = np.array([residue])
         structure.residues = np.concatenate((structure.residues, addarray))
@@ -172,7 +172,7 @@ def write_pdb(structure, filename, chain="all"):
         print("can only make files witb pdb extention")
 
     else:
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             if chain == "all":
                 atoms = structure.atoms
 
@@ -194,39 +194,39 @@ def write_pdb(structure, filename, chain="all"):
                         atom_nmbr += 1
 
                         col2 = str(atom_nmbr)
-                        for i in range((5 - len(col2))):
+                        for _ in range(5 - len(col2)):
                             col2 = " " + col2
 
-                        f.write("TER   {}     {}{}{}\n".format(col2, col4, col5, col6))
+                        f.write(f"TER   {col2}     {col4}{col5}{col6}\n")
                     elif col4.strip() in viable_residues and atom.residue_name not in viable_residues:
 
                         atom_nmbr += 1
 
                         col2 = str(atom_nmbr)
-                        for i in range((5 - len(col2))):
+                        for _ in range(5 - len(col2)):
                             col2 = " " + col2
 
-                        f.write("TER   {}     {}{}{}\n".format(col2, col4, col5, col6))
+                        f.write(f"TER   {col2}     {col4}{col5}{col6}\n")
 
                 atom_nmbr += 1
 
                 col1 = atom.identifier
-                for i in range((6 - len(col1))):
+                for _ in range(6 - len(col1)):
                     col1 = col1 + " "
 
                 col2 = str(atom_nmbr)
-                for i in range((5 - len(col2))):
+                for _ in range(5 - len(col2)):
                     col2 = " " + col2
 
                 col3 = atom.name
-                for i in range((5 - len(col3))):
+                for i in range(5 - len(col3)):
                     if i < 2:
                         col3 = " " + col3
                     else:
                         col3 = col3 + " "
 
                 col4 = atom.residue_name
-                for i in range((5 - len(col4))):
+                for i in range(5 - len(col4)):
                     if i < 1:
                         col4 = " " + col4
                     else:
@@ -235,48 +235,48 @@ def write_pdb(structure, filename, chain="all"):
                 col5 = atom.chain_name
 
                 col6 = str(atom.residue_name)
-                for i in range((4 - len(col6))):
+                for _ in range(4 - len(col6)):
                     col6 = " " + col6
 
                 col7 = str(atom.x)
                 if len(col7) > 11:
                     col7 = col7[:7]
-                for i in range((11 - len(col7))):
+                for _ in range(11 - len(col7)):
                     col7 = " " + col7
 
                 col8 = str(atom.y)
                 if len(col8) > 8:
                     col8 = col8[:7]
-                for i in range(8 - len(col8)):
+                for _ in range(8 - len(col8)):
                     col8 = " " + col8
 
                 col9 = str(atom.z)
                 if len(col9) > 8:
                     col9 = col9[:7]
-                for i in range(8 - len(col9)):
+                for _ in range(8 - len(col9)):
                     col9 = " " + col9
 
                 col10 = ""
-                for i in range(6-len(col10)):
+                for _ in range(6 - len(col10)):
                     col10 = " " + col10
 
                 col11 = ""
-                for i in range(6-len(col11)):
+                for _ in range(6 - len(col11)):
                     col11 = " " + col11
 
                 col12 = atom.segment_id
-                for i in range(4-len(atom.segment_id)):
+                for _ in range(4 - len(atom.segment_id)):
                     col12 = " " + col12
 
                 col13 = atom.element
-                for i in range(2-len(col13)):
+                for _ in range(2 - len(col13)):
                     col13 = " " + col13
 
-                f.write("{}{}{}{}{}{} {}{}{}{}{}      {}{}\n".format(col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13))
+                f.write(f"{col1}{col2}{col3}{col4}{col5}{col6} {col7}{col8}{col9}{col10}{col11}      {col12}{col13}\n")
             f.write("END")
 
 
-class Builder():
+class Builder:
 
     def build_dummy_atom(self, x, y, z, chain_name="A", ep="", size=""):
         identifier = "ATOM"
@@ -289,7 +289,19 @@ class Builder():
         temperature_factor = ""
         element = "X"
 
-        atom = Atom(identifier, name, residue_name, chain_name, residue_number, x, y, z, occupancy,
-                    temperature_factor, segid, element)
+        atom = Atom(
+            identifier,
+            name,
+            residue_name,
+            chain_name,
+            residue_number,
+            x,
+            y,
+            z,
+            occupancy,
+            temperature_factor,
+            segid,
+            element,
+        )
 
         return atom

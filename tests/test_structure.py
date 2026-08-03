@@ -40,7 +40,7 @@ def test_isoelectric_point():
 
 
 def test_heavy_atoms():
-    """tests if the correct """
+    """tests if the correct"""
     assert len(structure.heavy_atoms) == 1022
 
 

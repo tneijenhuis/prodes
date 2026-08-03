@@ -1,4 +1,3 @@
-
 import numpy as np
 
 from prodes.calculations.geometry import Sunflower_sphere
@@ -31,7 +30,7 @@ def move_point(point, origin, magnitude):
     point_vector, origin_vector = make_vector(point), make_vector(origin)
 
     vector = point_vector - origin_vector
-    unit_vector = vector/np.linalg.norm(vector)
+    unit_vector = vector / np.linalg.norm(vector)
     new_vector = unit_vector * magnitude + origin_vector
     point.x, point.y, point.z = new_vector
 
@@ -40,7 +39,7 @@ def maximal_distance(normal_vector, vector_on_plane, points):
     """Ditermines the maximal distance by calculating the dot product
     of each point in the system and the unit normal vector"""
 
-    unit_vector = normal_vector/np.linalg.norm(normal_vector)
+    unit_vector = normal_vector / np.linalg.norm(normal_vector)
     maximum = 0
     for point in points:
         point_vector = make_vector(point)
@@ -63,7 +62,7 @@ def required_distance(point_for_plane, structure, surface_points):
 def project_point(a, b, c, d, x1, y1, z1):
     """projects point 1 onto plane ax+by+cz=-d"""
 
-    k = (d - a * x1-b * y1-c * z1)/(a * a + b * b + c * c)
+    k = (d - a * x1 - b * y1 - c * z1) / (a * a + b * b + c * c)
     x2 = a * k + x1
     y2 = b * k + y1
     z2 = c * k + z1
@@ -94,7 +93,7 @@ def main():
     write_pdb(surf_struct, "1GDW_surf.pdb")
     surrounding_points = Sunflower_sphere(*make_vector(structure), 1, 120).points
 
-    for i, point in enumerate(surrounding_points):
+    for point in surrounding_points:
         distance = required_distance(point, structure, surface)
 
         move_point(point, structure, distance)

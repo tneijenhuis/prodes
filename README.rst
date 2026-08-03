@@ -226,6 +226,12 @@ testing, linting, type-checking, and documentation tools::
     conda env update -n prodes -f environment_dev.yml
     # or: mamba env update -n prodes -f environment_dev.yml
 
+After cloning, install the git hooks so that black, ruff and mypy run on every
+commit::
+
+    pre-commit install
+    pre-commit run --all-files   # optional: check the whole repo now
+
 **Option 2: Pip inside a conda environment**
 
 Create a minimal conda environment, then install with pip::

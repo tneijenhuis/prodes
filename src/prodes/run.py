@@ -18,17 +18,25 @@ def parse_arguments():
 
     env_full = os.getenv("PRODES_FULL_FEATURES", "false").lower() in ("true", "1", "yes")
 
-    parser = argparse.ArgumentParser(description='Calculate descriptors from atomic data')
+    parser = argparse.ArgumentParser(description="Calculate descriptors from atomic data")
     parser.add_argument("pdb_file", help="file location of a pdb or pqr file", type=str)
     parser.add_argument("out_file", help="file path of the output csv file", type=str)
     parser.add_argument("-p", "--pka", help="file location of the pka propka output", type=str, default=None)
     parser.add_argument("--probe", help="Radius of the surface probe", type=float, default=1.4)
     parser.add_argument("--ph", help="pH of the system", type=float, default=7)
     parser.add_argument("--hydro", help="Abriviation of the hydrophobicity scale to be used", type=str, default="mj_scaled")
-    parser.add_argument("--full-features", action=argparse.BooleanOptionalAction, default=env_full,
-                        help="Calculate the full legacy feature set including redundant features (default: from PRODES_FULL_FEATURES env var)")
-    parser.add_argument("--mem-limit", type=float, default=None,
-                        help="Maximum memory in MB for intermediate NumPy arrays per chunk (default: from PRODES_MEM_LIMIT_MB env var, or 2048)")
+    parser.add_argument(
+        "--full-features",
+        action=argparse.BooleanOptionalAction,
+        default=env_full,
+        help="Calculate the full legacy feature set including redundant features (default: from PRODES_FULL_FEATURES env var)",
+    )
+    parser.add_argument(
+        "--mem-limit",
+        type=float,
+        default=None,
+        help="Maximum memory in MB for intermediate NumPy arrays per chunk (default: from PRODES_MEM_LIMIT_MB env var, or 2048)",
+    )
 
     arg = parser.parse_args()
 
@@ -151,7 +159,7 @@ def calculate_average_chargesurface_grid_features(structure, surface_points, ph,
         for point in cell_surface_points:
             point.set_ep(charged_atoms, ph, formal=False)
 
-# Electrostatic potential fratures
+    # Electrostatic potential fratures
     eps = np.array([point.ep for point in surface_points])
 
     features["SurfEpMaxAverage"] = round(eps.max(), 3)
@@ -188,9 +196,7 @@ def calculate_shell_features(structure, surface_points, ph: float, features: dic
         a, b, c, d = geometry.find_plane(point, structure)
         projected_coords = geometry.project_point_batch(a, b, c, d, charged_coords)
         exits, has_exit = geometry.find_exit_batch(charged_coords, projected_coords, surface_coords, mem_limit_mb=mem_limit_mb)
-        potentials = geometry.map_ep_to_plane_batch(
-            charged_coords, projected_coords, exits, has_exit, charged_charges
-        )
+        potentials = geometry.map_ep_to_plane_batch(charged_coords, projected_coords, exits, has_exit, charged_charges)
         shell_potential_values.append(float(potentials.sum()))
 
     shell_potentials = np.array(shell_potential_values)
@@ -269,7 +275,16 @@ def construct_surface_grid(structure, r_probe):
     return property_points
 
 
-def calculate(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale="mj_scaled", full_features=False, mem_limit_mb=None):
+def calculate(
+    pdb_file,
+    out_file,
+    pkas_file=None,
+    ph=7,
+    r_probe=1.4,
+    hydro_scale="mj_scaled",
+    full_features=False,
+    mem_limit_mb=None,
+):
     """Calculates a list of supported features and returns a csv file
 
     Arguments
