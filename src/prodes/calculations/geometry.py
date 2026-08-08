@@ -1,8 +1,7 @@
-import os
-
 import numpy as np
 
 from prodes.calculations.distance_functions import atom_charge_coulomb, potential_multiple_media
+from prodes.parallel import worker_mem_limit_mb
 
 
 # inspired by https://stackoverflow.com/questions/9600801/evenly-distributing-n-points-on-a-sphere
@@ -38,7 +37,7 @@ class Sunflower_sphere:
 
             self.angles = np.array([theta, phi])
 
-            points = np.array([Point(xi, yi, zi) for xi, yi, zi in zip(x, y, z)])
+            points = np.array([Point(xi, yi, zi) for xi, yi, zi in zip(x, y, z, strict=True)])
 
             self._points = points
 
@@ -188,7 +187,14 @@ def _find_exit_chunk(atom_coords, projected_coords, surface_coords):
     """
     normal_vectors = projected_coords - atom_coords
     total_distances = np.linalg.norm(normal_vectors, axis=1)
-    directions = normal_vectors / total_distances[:, None]
+
+    # An atom lying on the plane projects onto itself, leaving a zero-length
+    # normal and an undefined direction. Dividing by it would fill that atom's
+    # row with NaN and carry the NaN into its exit coordinate. A zero direction
+    # keeps the arithmetic finite and yields no valid exit, which is the answer
+    # such an atom should get anyway.
+    safe_distances = np.where(total_distances > 0, total_distances, 1.0)
+    directions = normal_vectors / safe_distances[:, None]
 
     # dot_prods: (M, N) — avoids (M, N, 3) surface_vectors array
     dot_prods = directions @ surface_coords.T  # (M, N)
@@ -224,15 +230,19 @@ def find_exit_batch(atom_coords, projected_coords, surface_coords, mem_limit_mb=
     For each atom, finds where the ray from atom to its projected point on the
     shell plane exits the protein surface.
 
-    Processes atoms in chunks to keep peak memory within *mem_limit_mb*.
-    The limit defaults to the ``PRODES_MEM_LIMIT_MB`` env var (2048 MB if unset).
+    Processes atoms in chunks so that the intermediate arrays stay within
+    *mem_limit_mb*, which is a budget for this call and therefore for one worker.
+    The limit is a ceiling, not an allocation: a structure whose arrays fit in
+    less than the budget simply runs in one chunk and uses less. When None, the
+    budget is the whole-run ``PRODES_MEM_LIMIT_MB`` divided by the worker count,
+    since every worker runs this same calculation at the same time.
 
     Args:
         atom_coords: (M, 3) array of atom positions.
         projected_coords: (M, 3) array of projected positions on the plane.
         surface_coords: (N, 3) array of all surface point coordinates.
-        mem_limit_mb: Maximum memory in MB for intermediate arrays per chunk.
-            If None, reads from PRODES_MEM_LIMIT_MB env var (default 2048).
+        mem_limit_mb: Maximum memory in MB for intermediate arrays per chunk, for
+            this call. If None, uses one worker's share of PRODES_MEM_LIMIT_MB.
 
     Returns:
         exits: (M, 3) array of exit points (undefined where has_exit is False).
@@ -243,7 +253,7 @@ def find_exit_batch(atom_coords, projected_coords, surface_coords, mem_limit_mb=
         return np.empty((0, 3)), np.empty(0, dtype=bool)
 
     if mem_limit_mb is None:
-        mem_limit_mb = float(os.getenv("PRODES_MEM_LIMIT_MB", "2048"))
+        mem_limit_mb = worker_mem_limit_mb()
 
     n_surface = len(surface_coords)
     # Per atom we need ~5 (N,) float64 arrays + 1 bool array ≈ N * 48 bytes
@@ -290,8 +300,17 @@ def map_ep_to_plane_batch(atom_coords, projected_coords, surface_exits, has_exit
     Returns:
         (M,) array of potentials (0 where no exit found).
     """
-    total_distances = np.linalg.norm(projected_coords - atom_coords, axis=1)
-    protein_distances = np.linalg.norm(surface_exits - atom_coords, axis=1)
+    potentials = np.zeros(len(atom_coords))
+    if not np.any(has_exit):
+        return potentials
+
+    # Only the atoms with an exit are computed. Masking after the division
+    # instead would divide by the meaningless exit coordinate of every other
+    # atom, which is zero distance away and raises a divide-by-zero warning on
+    # the way to a result that is thrown away.
+    atom_coords = atom_coords[has_exit]
+    total_distances = np.linalg.norm(projected_coords[has_exit] - atom_coords, axis=1)
+    protein_distances = np.linalg.norm(surface_exits[has_exit] - atom_coords, axis=1)
 
     dist_water = (total_distances - protein_distances) * 1e-10
     dist_protein = protein_distances * 1e-10
@@ -301,10 +320,9 @@ def map_ep_to_plane_batch(atom_coords, projected_coords, surface_exits, has_exit
     perm_protein = 4 * absolute_permittivity
 
     denominator = perm_water * dist_water + perm_protein * dist_protein
-    coulomb_charges = charges * 1.6e-19
+    coulomb_charges = charges[has_exit] * 1.6e-19
 
-    potentials = coulomb_charges / (denominator * 4 * np.pi)
-    potentials = np.where(has_exit, potentials, 0.0)
+    potentials[has_exit] = coulomb_charges / (denominator * 4 * np.pi)
 
     return potentials
 

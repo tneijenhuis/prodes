@@ -3,7 +3,7 @@ import pytest
 from prodes.core.structure import Structure
 from prodes.io.parser import PDBparser
 
-structure = PDBparser().parse("tests/data/1GDW_h.pdb")
+structure = PDBparser().parse("tests/data/1GDW_h.pdb.zip")
 
 
 def test_empty_structure():

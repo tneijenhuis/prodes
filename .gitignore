@@ -6,3 +6,7 @@ build
 .env
 .conda-env
 temp
+benchmark_results
+
+# Similar tool analysis and issue drafts, not for publication
+docs/similar_tools/*

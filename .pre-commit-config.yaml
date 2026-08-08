@@ -1,4 +1,4 @@
-# DataCatalysis coding style §15 — run `pre-commit install` after cloning.
+# Run `pre-commit install` after cloning, so these run on every commit.
 # tests/data holds fixed-column scientific fixtures (PDB, PROPKA); never reformat them.
 exclude: ^tests/data/
 repos:

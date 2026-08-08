@@ -1,8 +1,8 @@
-# Calculation Time Benchmark
+# Relationship between protein size and calculation time
 
 ## Overview
 
-Surface property calculation time scales **exponentially** with the total
+For larger complexes, surface property calculation time scales **exponentially** with the total
 sequence length of all chains in the modelled structure. Users working with
 large proteins or multimers should be aware that calculation times can become
 substantial, and may wish to split large structures into smaller units
@@ -14,7 +14,7 @@ substantial, and may wish to split large structures into smaller units
 
 ### Server specification
 
-The benchmark was conducted on a Linux server with **125 GB of RAM** and a
+The benchmark was conducted on a Linux server (Server1) with **125 GB of RAM** and a
 single CPU core allocated to the calculation. No GPU acceleration was used.
 
 ### Dataset
@@ -23,13 +23,15 @@ Fifty-one *E. coli* proteins with homo-oligomeric structures were modelled
 with [Boltz-2](https://github.com/jwohlwend/boltz) and used as input to
 Prodes for surface property calculation. The total modelled sequence length
 (sum of all chains in the multimer) ranged from **218 to 1,788 residues**.
+Residue pKa values were assigned with propKa.
 
 ### Software configuration
 
 All calculations were performed with the NumPy-vectorised implementation
 (see the [main README](../README.rst) for details on the vectorisation
 work). Multiprocessing was **not** enabled — each calculation ran on a
-single core.
+single core. Not all improvements from the vectorisation had been fully
+implemented yet.
 
 ### Results
 
@@ -43,18 +45,10 @@ is the calculation time in minutes.
 
 ### Interpretation
 
-- **Small proteins (< 500 aa total):** calculations typically complete in
-  under 15 minutes.
-- **Medium proteins (500–1,000 aa total):** calculations range from ~15 to
-  ~60 minutes.
-- **Large proteins (> 1,000 aa total):** calculation time rises sharply,
-  exceeding 2–4 hours for structures above ~1,500 residues.
-
 The absolute times shown on the y-axis reflect single-core performance
-without multiprocessing. Future commits enabling multiprocessing will reduce
-these wall-clock times, but the **exponential scaling relationship** itself
-is an inherent property of the algorithm and will persist regardless of
-parallelisation strategy.
+without multiprocessing. Multiprocessing utilizing multiple CPU cores has since been added, and the wall-clock times below no longer reflect what the current code does: see
+[`benchmark/benchmark_summary.md`](benchmark/benchmark_summary.md) for a direct comparison against
+the original prodes, where the largest structure measured drops from 80+ minutes to ~0.5 minutes.
 
 ### Data
 

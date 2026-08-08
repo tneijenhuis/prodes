@@ -1,0 +1,577 @@
+# This file is the single source of truth for which features Prodes writes;
+# prodes.feature_dictionary reads its feature codes and order from here.
+# Maintained by hand: edit this file to add, drop or re-describe a feature.
+meta:
+  title: Prodes full-only features
+  description: The features written only under --full-features, each with the reason it is not in the default set. Keys are the feature codes written as CSV column headings, in output order.
+  feature_count: 51
+  written_when: --full-features / PRODES_FULL_FEATURES=true / full_features=True
+  analysis: docs/redundant_feature_analysis.md
+  source: prodes (Neijenhuis et al. 2024), https://github.com/Tneijenhuis/prodes
+  default_settings:
+    ph: 7
+    probe_radius_A: 1.4
+    hydrophobicity_scale: mj_scaled (Miyazawa-Jernigan, scaled)
+  conventions:
+    stat_suite: For any property X, the suite is Mean, Trimean, Median, Sum, Std. Trimean = (Q1 + 2*Q2 + Q3)/4. 'Max' and 'Min' are also reported separately. 'NPos*' / 'NNeg*' are the counts of surface points with strictly positive / negative values, and the 'Pos' / 'Neg' stats are computed over those subsets only.
+    formal_vs_average: Formal = electrostatic potential computed using integer formal charges of titratable residues at the given pH (each residue is fully protonated or fully deprotonated). Average = computed using partial/pKa-weighted (Henderson-Hasselbalch) charges, so each titratable site contributes a fractional charge.
+    units: Lengths in angstrom (A), area in A^2, mass in Da, charge in elementary units e. Electrostatic potentials are in arbitrary Coulombic units (charge_simple with eps_r=4); use only as relative descriptors. MHP is unitless.
+  fields:
+    plot_name: Short label for an axis or legend.
+    short_explanation: One-line description of what the feature is.
+    long_explanation: How the feature is calculated and how to read it.
+    original_explanation: The description from Supplemental Table 1 of Neijenhuis et al. 2024. Null for the few features added to the code after publication.
+    unit: Unit of measurement as given by that paper. Null when the feature is dimensionless, such as a fraction or a ratio, or when the paper does not list it.
+features:
+  Average charge:
+    plot_name: Net average charge
+    short_explanation: Net charge using fractional (Henderson-Hasselbalch) charges at the operating pH.
+    long_explanation: Same as 'Formal charge' but each titratable site contributes a partial charge derived from Henderson-Hasselbalch given pH and pKa. Smoother and usually a better proxy for the actual mean charge in solution.
+    unit: null
+    original_explanation: The charge calculated based on the pH of the solution using charges ranging between 1 and -1
+    dropped_because: near_duplicate_of_kept_feature
+    redundant_with:
+    - Formal charge
+    drop_note: Charge computed from pKa-weighted partial charges rather than integer formal charges. Almost identical to Formal charge across 820 proteins, and the difference is an artefact of the charge model rather than a property of the protein.
+    r_squared_with_first_partner: 0.9976
+  NSurfPoints:
+    plot_name: Number of surface points
+    short_explanation: Count of grid points on the protein surface used for property mapping.
+    long_explanation: Number of points in the 1 A property grid that lie on the solvent-accessible surface. Scales with surface area and is the denominator for all per-point statistics. Use it to normalise sums (e.g. SurfEpSum / NSurfPoints recovers a mean).
+    unit: null
+    original_explanation: The number of surface grid points
+    dropped_because: near_duplicate_of_kept_feature
+    redundant_with:
+    - Area
+    drop_note: The number of surface grid points is essentially a rescaling of the surface area. Area is kept because it is the physically interpretable member of the pair.
+    r_squared_with_first_partner: 0.9998
+  SurfEpTrimeanFormal:
+    plot_name: Surface EP trimean (formal)
+    short_explanation: Tukey trimean of EP across all surface points, formal charges.
+    long_explanation: Trimean = (Q1 + 2*Q2 + Q3)/4 of the per-point EP. Robust central tendency, less sensitive to outlier 'hotspot' points than the mean.
+    unit: v
+    original_explanation: The trimean of all electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfEpMeanFormal
+    drop_note: Trimean and Mean describe the same distribution and are near-identical across 820 proteins. SurfEpMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9977
+  SurfEpMedianFormal:
+    plot_name: Surface EP median (formal)
+    short_explanation: Median EP across all surface points, formal charges.
+    long_explanation: 50th percentile of per-point EP under the formal-charge model. Robust to extreme hotspots.
+    unit: v
+    original_explanation: The median of all electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfEpMeanFormal
+    drop_note: Median and Mean describe the same distribution and are near-identical across 820 proteins. SurfEpMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.994
+  SurfEpSumFormal:
+    plot_name: Surface EP sum (formal)
+    short_explanation: Sum of EP over all surface points, formal charges.
+    long_explanation: Sum of the per-point EP values; scales with surface size, so combine with NSurfPoints to interpret.
+    unit: v
+    original_explanation: The sum of all electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: sum_equals_mean_times_count
+    redundant_with:
+    - SurfEpMeanFormal
+    drop_note: SurfEpSumFormal = SurfEpMeanFormal x NSurfPoints, so it is exactly recoverable and adds no information.
+  SurfEpPosTrimeanFormal:
+    plot_name: Trimean +EP (formal)
+    short_explanation: Trimean over positive-EP points, formal charges.
+    long_explanation: Trimean of EP on the positive subset; robust counterpart to SurfEpPosMeanFormal.
+    unit: v
+    original_explanation: The trimean of all positive electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfEpPosMeanFormal
+    drop_note: Trimean and Mean describe the same distribution and are near-identical across 820 proteins. SurfEpPosMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9928
+  SurfEpPosMedianFormal:
+    plot_name: Median +EP (formal)
+    short_explanation: Median EP over positive-EP points, formal charges.
+    long_explanation: Median of EP on the positive subset only.
+    unit: v
+    original_explanation: The median of all positive electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfEpPosMeanFormal
+    drop_note: Median and Mean describe the same distribution and are near-identical across 820 proteins. SurfEpPosMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9828
+  SurfEpPosSumFormal:
+    plot_name: Sum +EP (formal)
+    short_explanation: Sum of EP over positive-EP points, formal charges.
+    long_explanation: Total positive electrostatic potential summed over points where it is positive. Combines patch size and intensity.
+    unit: v
+    original_explanation: The sum of all positive electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: sum_equals_mean_times_count
+    redundant_with:
+    - SurfEpPosMeanFormal
+    drop_note: SurfEpPosSumFormal = SurfEpPosMeanFormal x NSurfPosEpFormal, so it is exactly recoverable and adds no information.
+  NSurfNegEpFormal:
+    plot_name: '# negative-EP surface points (formal)'
+    short_explanation: Number of surface points with negative EP, formal charges.
+    long_explanation: Count of surface grid points whose formal-charge EP is strictly less than 0. Geometric size of negative patches.
+    unit: v
+    original_explanation: Number of points with a negative electrostatic potential calculated using binary charges of +1, 0 or - 1
+    dropped_because: exact_linear_combination
+    redundant_with:
+    - Area
+    - NSurfPosEpFormal
+    drop_note: NSurfNegEpFormal = NSurfPoints - NSurfPosEpFormal apart from points whose potential is exactly zero, and NSurfPoints is itself R2 0.9998 with Area. Jointly predicted at R2 0.99977 by Area and NSurfPosEpFormal. See finding 10 in docs/redundant_feature_analysis.md.
+  SurfEpNegTrimeanFormal:
+    plot_name: Trimean -EP (formal)
+    short_explanation: Trimean over negative-EP points, formal charges.
+    long_explanation: Trimean of EP on the negative subset; robust counterpart to SurfEpNegMeanFormal.
+    unit: v
+    original_explanation: The trimean of all negative electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfEpNegMeanFormal
+    drop_note: Trimean and Mean describe the same distribution and are near-identical across 820 proteins. SurfEpNegMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9976
+  SurfEpNegMedianFormal:
+    plot_name: Median -EP (formal)
+    short_explanation: Median EP over negative-EP points, formal charges.
+    long_explanation: Median of EP on the negative subset only.
+    unit: v
+    original_explanation: The median of all negative electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfEpNegMeanFormal
+    drop_note: Median and Mean describe the same distribution and are near-identical across 820 proteins. SurfEpNegMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9941
+  SurfEpNegSumFormal:
+    plot_name: Sum -EP (formal)
+    short_explanation: Sum of EP over negative-EP points, formal charges.
+    long_explanation: Total negative electrostatic potential; combines size and intensity of negative patches.
+    unit: v
+    original_explanation: The sum of all negative electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: sum_equals_mean_times_count
+    redundant_with:
+    - SurfEpNegMeanFormal
+    drop_note: SurfEpNegSumFormal = SurfEpNegMeanFormal x NSurfNegEpFormal, so it is exactly recoverable and adds no information.
+  SurfMhpTrimean:
+    plot_name: Surface MHP trimean
+    short_explanation: Trimean of MHP across all surface points.
+    long_explanation: Trimean of the per-point MHP distribution; robust central tendency.
+    unit: null
+    original_explanation: The trimean of all hydrophobicity potentials
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfMhpMean
+    drop_note: Trimean and Mean describe the same distribution and are near-identical across 820 proteins. SurfMhpMean is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9767
+  SurfMhpMedian:
+    plot_name: Surface MHP median
+    short_explanation: Median MHP across all surface points.
+    long_explanation: Median per-point MHP.
+    unit: null
+    original_explanation: The median of all hydrophobicity potentials
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfMhpMean
+    drop_note: Median and Mean describe the same distribution and are near-identical across 820 proteins. SurfMhpMean is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9453
+  SurfMhpSum:
+    plot_name: Surface MHP sum
+    short_explanation: Sum of MHP over all surface points.
+    long_explanation: Total hydrophobicity-weighted score; scales with surface size, normalise with NSurfPoints if needed.
+    unit: null
+    original_explanation: The sum of all hydrophobicity potentials
+    dropped_because: sum_equals_mean_times_count
+    redundant_with:
+    - SurfMhpMean
+    drop_note: SurfMhpSum = SurfMhpMean x NSurfPoints, so it is exactly recoverable and adds no information.
+  SurfPosMhpTrimean:
+    plot_name: Trimean MHP (hydrophobic)
+    short_explanation: Trimean MHP over hydrophobic points.
+    long_explanation: Trimean of MHP on the hydrophobic subset.
+    unit: null
+    original_explanation: The trimean of positive hydrophobicity electrostatic potentials
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfPosMhpMean
+    drop_note: Trimean and Mean describe the same distribution and are near-identical across 820 proteins. SurfPosMhpMean is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9645
+  SurfPosMhpMedian:
+    plot_name: Median MHP (hydrophobic)
+    short_explanation: Median MHP over hydrophobic points.
+    long_explanation: Median MHP on points with MHP > 0.
+    unit: null
+    original_explanation: null
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfPosMhpMean
+    drop_note: Median and Mean describe the same distribution and are near-identical across 820 proteins. SurfPosMhpMean is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9359
+  SurfPosMhpSum:
+    plot_name: Sum MHP (hydrophobic)
+    short_explanation: Sum of MHP over hydrophobic points.
+    long_explanation: Total hydrophobic score; combines size and intensity of hydrophobic patches.
+    unit: null
+    original_explanation: The sum of all positive hydrophobicity potentials
+    dropped_because: sum_equals_mean_times_count
+    redundant_with:
+    - SurfPosMhpMean
+    drop_note: SurfPosMhpSum = SurfPosMhpMean x NSurfPosMhp, so it is exactly recoverable and adds no information.
+  NSurfNegMhp:
+    plot_name: '# hydrophilic (MHP<0) surface points'
+    short_explanation: Number of surface points with MHP < 0 (hydrophilic).
+    long_explanation: Count of surface grid points classified as hydrophilic by the MHP scale (negative value). Size of the hydrophilic surface.
+    unit: null
+    original_explanation: Number of points with a negative hydrophobicity potential
+    dropped_because: exact_linear_combination
+    redundant_with:
+    - Area
+    - NSurfPosMhp
+    drop_note: NSurfNegMhp = NSurfPoints - NSurfPosMhp exactly, and NSurfPoints is itself R2 0.9998 with Area, so this count is a linear combination of two kept features. It is also a protein-size proxy, whereas NSurfPosMhp carries the hydrophobic-patch signal. See finding 8 in docs/redundant_feature_analysis.md.
+  SurfNegMhpTrimean:
+    plot_name: Trimean MHP (hydrophilic)
+    short_explanation: Trimean MHP over hydrophilic points.
+    long_explanation: Trimean of MHP on the hydrophilic subset.
+    unit: null
+    original_explanation: The trimean of all negative hydrophobicity potentials
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfNegMhpMean
+    drop_note: Trimean and Mean describe the same distribution and are near-identical across 820 proteins. SurfNegMhpMean is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9828
+  SurfNegMhpMedian:
+    plot_name: Median MHP (hydrophilic)
+    short_explanation: Median MHP over hydrophilic points.
+    long_explanation: Median MHP on points with MHP < 0.
+    unit: null
+    original_explanation: null
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - SurfNegMhpMean
+    drop_note: Median and Mean describe the same distribution and are near-identical across 820 proteins. SurfNegMhpMean is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9746
+  SurfNegMhpSum:
+    plot_name: Sum MHP (hydrophilic)
+    short_explanation: Sum of MHP over hydrophilic points.
+    long_explanation: Total hydrophilic score (negative); combines size and intensity of hydrophilic patches.
+    unit: null
+    original_explanation: The sum of all negative hydrophobicity potentials
+    dropped_because: sum_equals_mean_times_count
+    redundant_with:
+    - SurfNegMhpMean
+    drop_note: SurfNegMhpSum = SurfNegMhpMean x NSurfNegMhp, so it is exactly recoverable and adds no information.
+  SurfEpMaxAverage:
+    plot_name: Surface EP max (average charges)
+    short_explanation: Maximum EP over surface points, partial-charge model.
+    long_explanation: Same as SurfEpMaxFormal but EP is computed using fractional Henderson-Hasselbalch charges instead of integer formal charges. Smoother and more realistic than the formal version.
+    unit: v
+    original_explanation: The maximum observed electrostatic potential calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpMaxFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpMaxFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9969
+  SurfEpMinAverage:
+    plot_name: Surface EP min (average charges)
+    short_explanation: Minimum EP over surface points, partial-charge model.
+    long_explanation: Most negative per-point EP under the average-charge model.
+    unit: v
+    original_explanation: The minimum observed electrostatic potential calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpMinFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpMinFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9964
+  SurfEpMeanAverage:
+    plot_name: Surface EP mean (average)
+    short_explanation: Mean EP across all surface points, average charges.
+    long_explanation: Arithmetic mean of per-point EP under the partial-charge model.
+    unit: v
+    original_explanation: The mean of all electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpMeanFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpMeanFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9971
+  SurfEpTrimeanAverage:
+    plot_name: Surface EP trimean (average)
+    short_explanation: Trimean of EP across surface points, average charges.
+    long_explanation: Trimean of per-point EP under the partial-charge model; robust central tendency.
+    unit: v
+    original_explanation: The trimean of all electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpTrimeanFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpTrimeanFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9971
+  SurfEpMedianAverage:
+    plot_name: Surface EP median (average)
+    short_explanation: Median EP across surface points, average charges.
+    long_explanation: Median per-point EP under the partial-charge model.
+    unit: v
+    original_explanation: The median of all electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpMedianFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpMedianFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9971
+  SurfEpSumAverage:
+    plot_name: Surface EP sum (average)
+    short_explanation: Sum of EP over all surface points, average charges.
+    long_explanation: Sum of per-point EP under the partial-charge model; scales with surface size.
+    unit: v
+    original_explanation: The sum of all electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpSumFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpSumFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9982
+  SurfEpStdAverage:
+    plot_name: Surface EP std (average)
+    short_explanation: Std of EP across surface points, average charges.
+    long_explanation: Spread of per-point EP under the partial-charge model; indicates polarisation of the surface.
+    unit: v
+    original_explanation: The standard deviation of the electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpStdFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpStdFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9978
+  NSurfPosEpAverage:
+    plot_name: '# positive-EP surface points (average)'
+    short_explanation: Number of surface points with positive EP, average charges.
+    long_explanation: Count of surface points with EP > 0 under the partial-charge model. Size of positive patches.
+    unit: v
+    original_explanation: Number of points with a positive electrostatic potential calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - NSurfPosEpFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to NSurfPosEpFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9933
+  SurfEpPosMeanAverage:
+    plot_name: Mean +EP (average)
+    short_explanation: Mean EP over positive-EP points, average charges.
+    long_explanation: Mean EP on positive subset, partial-charge model. Intensity of positive patches.
+    unit: v
+    original_explanation: The mean of all positive electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpPosMeanFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpPosMeanFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9959
+  SurfEpPosTrimeanAverage:
+    plot_name: Trimean +EP (average)
+    short_explanation: Trimean over positive-EP points, average charges.
+    long_explanation: Trimean EP on the positive subset, partial-charge model.
+    unit: v
+    original_explanation: The trimean of all positive electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpPosTrimeanFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpPosTrimeanFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9949
+  SurfEpPosMedianAverage:
+    plot_name: Median +EP (average)
+    short_explanation: Median EP over positive-EP points, average charges.
+    long_explanation: Median EP on positive subset, partial-charge model.
+    unit: v
+    original_explanation: The median of all positive electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpPosMedianFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpPosMedianFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9937
+  SurfEpPosSumAverage:
+    plot_name: Sum +EP (average)
+    short_explanation: Sum of EP over positive-EP points, average charges.
+    long_explanation: Total positive EP under the partial-charge model; combines patch size and intensity.
+    unit: v
+    original_explanation: The sum of all positive electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpPosSumFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpPosSumFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9954
+  SurfEpPosStdAverage:
+    plot_name: Std +EP (average)
+    short_explanation: Std of EP over positive-EP points, average charges.
+    long_explanation: Spread of positive-EP values, partial-charge model.
+    unit: v
+    original_explanation: The standard deviation of the positive electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpPosStdFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpPosStdFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9953
+  NSurfNegEpAverage:
+    plot_name: '# negative-EP surface points (average)'
+    short_explanation: Number of surface points with negative EP, average charges.
+    long_explanation: Count of surface points with EP < 0 under the partial-charge model. Size of negative patches.
+    unit: v
+    original_explanation: Number of points with a negative electrostatic potential calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - NSurfNegEpFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to NSurfNegEpFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9986
+  SurfEpNegMeanAverage:
+    plot_name: Mean -EP (average)
+    short_explanation: Mean EP over negative-EP points, average charges.
+    long_explanation: Mean EP on negative subset, partial-charge model. Intensity of negative patches.
+    unit: v
+    original_explanation: The mean of all negative electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpNegMeanFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpNegMeanFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9964
+  SurfEpNegTrimeanAverage:
+    plot_name: Trimean -EP (average)
+    short_explanation: Trimean over negative-EP points, average charges.
+    long_explanation: Trimean EP on negative subset, partial-charge model.
+    unit: v
+    original_explanation: The trimean of all negative electrostatic potentials calculated using charges ranging between 1 and - 1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpNegTrimeanFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpNegTrimeanFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9963
+  SurfEpNegMedianAverage:
+    plot_name: Median -EP (average)
+    short_explanation: Median EP over negative-EP points, average charges.
+    long_explanation: Median EP on negative subset, partial-charge model.
+    unit: v
+    original_explanation: The median of all negative electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpNegMedianFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpNegMedianFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9963
+  SurfEpNegSumAverage:
+    plot_name: Sum -EP (average)
+    short_explanation: Sum of EP over negative-EP points, average charges.
+    long_explanation: Total negative EP under the partial-charge model; combines size and intensity of negative patches.
+    unit: v
+    original_explanation: The sum of all negative electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpNegSumFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpNegSumFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9986
+  SurfEpNegStdAverage:
+    plot_name: Std -EP (average)
+    short_explanation: Std of EP over negative-EP points, average charges.
+    long_explanation: Spread of negative-EP values, partial-charge model.
+    unit: v
+    original_explanation: The standard deviation of the negative electrostatic potentials calculated using charges ranging between 1 and -1
+    dropped_because: average_charge_block
+    redundant_with:
+    - SurfEpNegStdFormal
+    drop_note: 'Part of the average-charge surface electrostatics block, which is skipped entirely. Near-identical to SurfEpNegStdFormal: formal vs average is a choice of charge model, not a different property of the protein. Skipping the block also skips a whole calculation phase.'
+    r_squared_with_first_partner: 0.9966
+  ShellEpTrimeanFormal:
+    plot_name: Shell EP trimean (formal)
+    short_explanation: Trimean shell EP across directions.
+    long_explanation: Trimean of per-direction shell EPs; robust central tendency of the angular distribution.
+    unit: v
+    original_explanation: The trimean of all shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - ShellEpMeanFormal
+    drop_note: Trimean and Mean describe the same distribution and are near-identical across 820 proteins. ShellEpMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9948
+  ShellEpMedianFormal:
+    plot_name: Shell EP median (formal)
+    short_explanation: Median shell EP across directions.
+    long_explanation: Median per-direction shell EP.
+    unit: v
+    original_explanation: The median of all shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - ShellEpMeanFormal
+    drop_note: Median and Mean describe the same distribution and are near-identical across 820 proteins. ShellEpMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9821
+  ShellEpSumFormal:
+    plot_name: Shell EP sum (formal)
+    short_explanation: Sum of shell EP across directions.
+    long_explanation: Sum of per-direction shell EP values; ~120 contributions, so closely related to the mean.
+    unit: v
+    original_explanation: The sum of all shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: sum_equals_mean_times_count
+    redundant_with:
+    - ShellEpMeanFormal
+    drop_note: ShellEpSumFormal = ShellEpMeanFormal x the 120 shell directions, so it is exactly recoverable and adds no information.
+  ShellEpPosTrimeanFormal:
+    plot_name: Trimean shell +EP (formal)
+    short_explanation: Trimean shell EP over positive directions.
+    long_explanation: Trimean shell EP on the positive subset.
+    unit: v
+    original_explanation: The trimean of all positive shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - ShellEpPosMeanFormal
+    drop_note: Trimean and Mean describe the same distribution and are near-identical across 820 proteins. ShellEpPosMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9878
+  ShellEpPosMedianFormal:
+    plot_name: Median shell +EP (formal)
+    short_explanation: Median shell EP over positive directions.
+    long_explanation: Median shell EP on the positive subset.
+    unit: v
+    original_explanation: The median of all positive shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - ShellEpPosMeanFormal
+    drop_note: Median and Mean describe the same distribution and are near-identical across 820 proteins. ShellEpPosMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9623
+  ShellEpPosSumFormal:
+    plot_name: Sum shell +EP (formal)
+    short_explanation: Sum of shell EP over positive directions.
+    long_explanation: Total positive shell EP; combines angular extent and intensity of positive far-field.
+    unit: v
+    original_explanation: The sum of all positive shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: sum_equals_mean_times_count
+    redundant_with:
+    - ShellEpPosMeanFormal
+    drop_note: ShellEpPosSumFormal = ShellEpPosMeanFormal x NShellPosEpFormal, so it is exactly recoverable and adds no information.
+  NShellNegEpFormal:
+    plot_name: '# negative shell directions (formal)'
+    short_explanation: Number of shell directions with negative EP.
+    long_explanation: Count of the ~120 shell directions where projected EP < 0. Reports how much of the surrounding 'sky' is electronegative.
+    unit: v
+    original_explanation: Number of points with a negative shell electrostatic potential calculated using binary charges of +1, 0 or -1
+    dropped_because: exact_linear_combination
+    redundant_with:
+    - NShellPosEpFormal
+    drop_note: NShellNegEpFormal = 120 - NShellPosEpFormal exactly, because every one of the 120 sunflower-sphere directions is counted as either positive or negative.
+    r_squared_with_first_partner: 1.0
+  ShellEpNegTrimeanFormal:
+    plot_name: Trimean shell -EP (formal)
+    short_explanation: Trimean shell EP over negative directions.
+    long_explanation: Trimean shell EP on the negative subset.
+    unit: v
+    original_explanation: The trimean of all negative shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - ShellEpNegMeanFormal
+    drop_note: Trimean and Mean describe the same distribution and are near-identical across 820 proteins. ShellEpNegMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.9942
+  ShellEpNegMedianFormal:
+    plot_name: Median shell -EP (formal)
+    short_explanation: Median shell EP over negative directions.
+    long_explanation: Median shell EP on the negative subset.
+    unit: v
+    original_explanation: The median of all negative shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: redundant_central_tendency
+    redundant_with:
+    - ShellEpNegMeanFormal
+    drop_note: Median and Mean describe the same distribution and are near-identical across 820 proteins. ShellEpNegMeanFormal is kept as the representative central-tendency statistic.
+    r_squared_with_first_partner: 0.983
+  ShellEpNegSumFormal:
+    plot_name: Sum shell -EP (formal)
+    short_explanation: Sum of shell EP over negative directions.
+    long_explanation: Total negative shell EP; combines angular extent and intensity of negative far-field.
+    unit: v
+    original_explanation: The sum of all negative shell electrostatic potentials calculated using binary charges of +1, 0 or -1
+    dropped_because: sum_equals_mean_times_count
+    redundant_with:
+    - ShellEpNegMeanFormal
+    drop_note: ShellEpNegSumFormal = ShellEpNegMeanFormal x NShellNegEpFormal, so it is exactly recoverable and adds no information.

@@ -19,7 +19,7 @@ def potential_multiple_media(charge: float, distances: list, dielectic_constants
 
     absolute_permittivity = 8.854e-12
     denominator = 0
-    for distance, dielectric_constant in zip(distances, dielectic_constants):
+    for distance, dielectric_constant in zip(distances, dielectic_constants, strict=True):
         permittivity = dielectric_constant * absolute_permittivity
         denominator += permittivity * distance
 

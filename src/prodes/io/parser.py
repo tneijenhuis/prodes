@@ -1,3 +1,7 @@
+import tempfile
+import zipfile
+from pathlib import Path
+
 import numpy as np
 
 from prodes.core.atom import Atom
@@ -6,22 +10,90 @@ from prodes.core.residue import Residue
 from prodes.core.structure import Structure
 
 
+def pdb_name_in_archive(archive: zipfile.ZipFile, source):
+    """Returns the name of the single PDB member of an open zip archive.
+
+    Args:
+        archive: an open ZipFile.
+        source: the archive path, used only to make the error message useful.
+
+    Raises:
+        ValueError: if the archive does not hold exactly one PDB file.
+    """
+
+    names = [name for name in archive.namelist() if name.endswith(".pdb")]
+    if len(names) != 1:
+        raise ValueError(f"expected exactly one .pdb file inside {source}, found {len(names)}: {names}")
+
+    return names[0]
+
+
+def extract_pdb(archive, directory):
+    """Extracts the PDB file held in a zip archive and returns the path to it.
+
+    Args:
+        archive: path to a zip holding exactly one PDB file.
+        directory: directory to extract into, normally a temporary one.
+    """
+
+    with zipfile.ZipFile(archive) as zipped:
+        return zipped.extract(pdb_name_in_archive(zipped, archive), directory)
+
+
+def read_pdb_text(file):
+    """Returns the text of a PDB file, reading straight through a zip archive if there is one.
+
+    Lets a caller size or inspect a structure without extracting it to disk.
+    """
+
+    path = Path(file)
+    if path.suffix != ".zip":
+        return path.read_text()
+
+    with zipfile.ZipFile(path) as zipped:
+        return zipped.read(pdb_name_in_archive(zipped, path)).decode()
+
+
 class PDBparser:
 
     def parse(self, file, identifier="ATOM"):
-        """Parses pdb files"""
+        """Parses pdb files, either plain or held in a zip archive
+
+        A zipped structure is extracted to a temporary file and parsed from
+        there, so that callers can point at a .pdb.zip without unpacking it
+        themselves.
+
+        The structure is named after the file the caller named, which is also
+        what ends up in the ID column of the output. For an archive that is the
+        archive itself and not its member, so bar.pdb.zip holding foo.pdb gives
+        a structure called bar.
+        """
 
         self.identifier = identifier
-        name = file.split("/")[-1].split(".")[0]
+        path = Path(file)
 
-        if file[-4:] == ".pdb":
-            with open(file) as pdb:
-                structure = self._read_pdb(pdb, name)
+        if path.suffix == ".zip":
+            with tempfile.TemporaryDirectory() as directory:
+                return self._parse_pdb(Path(extract_pdb(path, directory)), Path(path.stem).stem)
 
-        else:
+        return self._parse_pdb(path, path.stem)
+
+    def _parse_pdb(self, path: Path, name: str):
+        """Parses one plain PDB file under a name chosen by the caller.
+
+        Args:
+            path: path to a .pdb file.
+            name: name to give the structure, which becomes the output ID.
+
+        Raises:
+            ValueError: if the file is not a .pdb.
+        """
+
+        if path.suffix != ".pdb":
             raise ValueError("File extention not recognized by parser")
 
-        return structure
+        with open(path) as pdb:
+            return self._read_pdb(pdb, name)
 
     def _read_pdb(self, pdb, name):
         """Function takes a PDB formatted file and returns a Structure object which contains all atom information of the file"""
@@ -172,15 +244,24 @@ def write_pdb(structure, filename, chain="all"):
         print("can only make files witb pdb extention")
 
     else:
-        with open(filename, "w") as f:
-            if chain == "all":
-                atoms = structure.atoms
+        if chain == "all":
+            atoms = structure.atoms
 
-            else:
-                atoms = np.empty([0])
-                for struct_chain in structure.chains:
-                    if struct_chain.name in chain:
-                        atoms = np.concatenate((atoms, struct_chain.atoms))
+        else:
+            atoms = np.empty([0])
+            for struct_chain in structure.chains:
+                if struct_chain.name in chain:
+                    atoms = np.concatenate((atoms, struct_chain.atoms))
+
+        # The residue number gets columns 23-26 and nothing more, so a 5 digit
+        # number would overflow into the chain field and come back as a
+        # different residue when the file is read again. Checked before the file
+        # is opened, so that an unwritable structure leaves no half written file.
+        too_wide = sorted({atom.residue_number for atom in atoms if len(str(atom.residue_number)) > 4})
+        if too_wide:
+            raise ValueError(f"residue numbers need more than the 4 columns the PDB format gives them: {too_wide[:5]}")
+
+        with open(filename, "w") as f:
             viable_residues = data.all_residues().keys()
             atom_nmbr = 0
             col4 = ""
@@ -234,7 +315,10 @@ def write_pdb(structure, filename, chain="all"):
 
                 col5 = atom.chain_name
 
-                col6 = str(atom.residue_name)
+                # Columns 23-26 hold the residue number, which is what the parser
+                # reads back from here; writing the residue name made the output
+                # unreadable by PDBparser
+                col6 = str(atom.residue_number)
                 for _ in range(4 - len(col6)):
                     col6 = " " + col6
 
@@ -284,11 +368,11 @@ class Builder:
         residue_name = "DUM"
         chain_name = chain_name
         residue_number = 0
-        occupancy = ""
         segid = ""
-        temperature_factor = ""
         element = "X"
 
+        # Passed by keyword: Atom no longer takes occupancy and temperature_factor,
+        # so the old positional call silently put them in segment_id and element
         atom = Atom(
             identifier,
             name,
@@ -298,10 +382,8 @@ class Builder:
             x,
             y,
             z,
-            occupancy,
-            temperature_factor,
-            segid,
-            element,
+            segment_id=segid,
+            element=element,
         )
 
         return atom

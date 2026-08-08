@@ -50,6 +50,20 @@ class Property_point:
         else:
             raise NameError("lipo is not yet defined, try set_lipo before calling lipo")
 
+    def set_values(self, ep=None, lipo=None):
+        """Writes an already calculated electrostatic potential and/or lipophilicity onto the point.
+
+        Used to reassemble results computed in worker processes: a forked worker
+        mutates its own copy of the point, so the parent writes the returned
+        values onto the original object itself.
+        """
+
+        if ep is not None:
+            self.__ep = ep
+
+        if lipo is not None:
+            self.__lipo = lipo
+
     def set_ep(self, atoms, ph=7, formal=True, cutoff=10000):
         """Projects the partial charges of an array of atoms onto the point
         -------
@@ -101,7 +115,7 @@ class Property_point:
             return
 
         dists_masked = dists[mask]
-        atoms_masked = [a for a, m in zip(non_h, mask) if m]
+        atoms_masked = [a for a, m in zip(non_h, mask, strict=True) if m]
         contributions = np.array([1.0 if a.name == "OXT" else scale_dict[a.residue_name] for a in atoms_masked])
         lipophilicity = float(np.sum(contributions * np.exp(-dists_masked)))
         self.__lipo = lipophilicity

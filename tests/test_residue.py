@@ -3,7 +3,7 @@ import pytest
 from prodes.core.residue import Residue
 from prodes.io import parser as ps
 
-structure = ps.PDBparser().parse("tests/data/1GDW_h.pdb")
+structure = ps.PDBparser().parse("tests/data/1GDW_h.pdb.zip")
 residues = {}
 for residue in structure.residues[1:]:
     if residue.name not in residues:

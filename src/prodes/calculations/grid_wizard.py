@@ -90,7 +90,7 @@ class Grid:
         """finds the x, y and z coordinates of the starting cells"""
 
         starts = []
-        for center_coordiante, n_cells in zip(center, shape):
+        for center_coordiante, n_cells in zip(center, shape, strict=True):
             start = center_coordiante - n_cells / 2 * self.size + self.size / 2
             starts.append(start)
         return starts
