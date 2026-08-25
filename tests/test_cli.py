@@ -17,7 +17,7 @@ from prodes.run import calculate, main, parse_arguments
 def parse(monkeypatch, *arguments):
     """Runs parse_arguments over a fabricated command line."""
 
-    monkeypatch.setattr("sys.argv", ["prodes", "in.pdb", "out.csv", *arguments])
+    monkeypatch.setattr("sys.argv", ["prodes", "in.pdb", "out.zip", *arguments])
 
     return parse_arguments()
 
@@ -28,7 +28,7 @@ def test_defaults_are_the_documented_ones(monkeypatch):
     monkeypatch.delenv("PRODES_FULL_FEATURES", raising=False)
     pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale, full_features, mem_limit_mb = parse(monkeypatch)
 
-    assert (pdb_file, out_file, pkas_file) == ("in.pdb", "out.csv", None)
+    assert (pdb_file, out_file, pkas_file) == ("in.pdb", "out.zip", None)
     assert (ph, r_probe, hydro_scale) == (7, 1.4, "mj_scaled")
     assert full_features is False
     assert mem_limit_mb is None
@@ -90,11 +90,11 @@ def test_main_forwards_every_parsed_argument(monkeypatch, tmp_path):
         captured["kwargs"] = kwargs
 
     monkeypatch.setattr("prodes.run.calculate", fake_calculate)
-    monkeypatch.setattr("sys.argv", ["prodes", str(tmp_path / "in.pdb"), str(tmp_path / "out.csv"), "--ph", "5.5", "--full-features"])
+    monkeypatch.setattr("sys.argv", ["prodes", str(tmp_path / "in.pdb"), str(tmp_path / "out.zip"), "--ph", "5.5", "--full-features"])
 
     main()
 
-    assert captured["args"][:2] == (str(tmp_path / "in.pdb"), str(tmp_path / "out.csv"))
+    assert captured["args"][:2] == (str(tmp_path / "in.pdb"), str(tmp_path / "out.zip"))
     assert captured["args"][3] == 5.5
     assert captured["args"][6] is True
     assert len(captured["args"]) == 8

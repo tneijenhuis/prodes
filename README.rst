@@ -7,7 +7,7 @@ Those columns are designed to be used directly as the input features of a machin
 
 Prodes is **completely free, including for commercial use**, under the MIT licence. It needs no external electrostatics solver, no licence server and no web upload. A protein under 1000 residues should only take a few minutes on a normal desktop computer, and seconds on a dedicated linux server.
 
-**Jump to:** `Installation`_ | `Quick start`_ | `The output CSV`_ | `Using the features in a model`_ | `pKa values and protonation states`_ | `Using Prodes from Python`_ | `Speed`_ | `How to cite`_
+**Jump to:** `Installation`_ | `Quick start`_ | `Viewing the surface`_ | `The output bundle`_ | `Using the features in a model`_ | `pKa values and protonation states`_ | `Using Prodes from Python`_ | `Speed`_ | `How to cite`_
 
 This is a fork of `tneijenhuis/prodes <https://github.com/tneijenhuis/prodes>`_, a package written by `Tim Neijenhuis <https://www.linkedin.com/in/tim-neijenhuis>`_ during his Ph.D. at the `Marcel Ottens group <https://www.tudelft.nl/en/faculty-of-applied-sciences/about-faculty/departments/biotechnology/research-sections/bioprocess-engineering/marcel-ottens-group/>`_ at the `Delft University of Technology (TU Delft) <https://www.tudelft.nl/>`_. Currently this fork preserves the original algorithm. The changes are performance (a 170x speedup for many proteins, see `Speed`_) and a reduced, non-redundant default feature set (see `The reduced feature set`_).
 
@@ -81,9 +81,11 @@ Activate the environment, then run these three commands on your structure:
 
     propka3 1GDW.pdb                                                  # predict per-residue pKa values
     python -m prodes.io.pka_converter 1GDW.pka propka -o 1GDW_pka.json  # convert them for Prodes
-    python -m prodes 1GDW.pdb out.csv --ph 7.4 --pka 1GDW_pka.json    # calculate the features
+    python -m prodes 1GDW.pdb 1GDW.zip --ph 7.4 --pka 1GDW_pka.json   # calculate the features
 
-That writes ``out.csv`` containing one row: the ID of your structure plus its 54 feature values. On a small protein the whole thing takes seconds.
+That writes ``1GDW.zip``, a bundle holding the 54 features, the surface points they were calculated from, and ready-to-open viewer scripts. On a small protein the whole thing takes seconds.
+
+See `Viewing the surface`_ to look at the result.
 
 PROPKA works out the pKa of every titratable residue *in its actual structural context*, because a buried aspartate and an exposed one titrate at quite different pH values. Without it (leave off ``--pka``), Prodes falls back to one textbook pKa per residue type. See `pKa values and protonation states`_.
 
@@ -101,6 +103,61 @@ The ones you are most likely to want:
 * ``--full-features`` — write the original 105-feature set instead of the reduced 54. See `The reduced feature set`_.
 * ``--n-workers``, ``--chunksize``, ``--mem-limit`` — CPU and memory tuning. You can ignore all three; the defaults are sensible. See `Speed`_.
 
+Viewing the surface
+--------------------
+
+Prodes does not only return numbers. Every run also produces two ready-made views of the protein surface it measured, so you can see where the charge and the hydrophobic patches actually are.
+
+.. |ep| image:: docs/images/surface_electrostatic_potential.png
+   :width: 100%
+
+.. |phobic| image:: docs/images/surface_hydrophobicity.png
+   :width: 100%
+
++-------------------------------+-------------------------------+
+| |ep|                          | |phobic|                      |
++===============================+===============================+
+| **Electrostatic potential.**  | **Hydrophobicity.** Grey is   |
+| Red is negative, blue         | hydrophilic, pale green       |
+| positive, white near zero.    | hydrophobic, dark green       |
+|                               | strongly so.                  |
++-------------------------------+-------------------------------+
+
+Unpack the bundle and open one of the PyMOL scripts from inside the directory:
+
+.. code-block:: text
+
+    unzip 1GDW.zip
+    cd 1GDW
+    pymol 1GDW_ep.pml                 # electrostatic potential
+    pymol 1GDW_hydrophobicity.pml     # hydrophobicity
+
+The ``.pml`` files are PyMOL scripts: plain text files of PyMOL commands that load the structure and colour its surface in one step, so there is nothing to set up by hand. The ``.cxc`` files do the same for ChimeraX. The paths inside them are relative, so they only work when opened from inside the unpacked directory. If PyMOL is already open, use File, Run Script instead.
+
+**Reading the colours**
+
+* **Electrostatic potential.** The scale is taken from each protein's own range, so no patch is ever clipped. The limit used is written into the script, and comparing two proteins directly means setting the same limit on both.
+* **Hydrophobicity.** The two green cutoffs are fixed rather than per-protein, so the same green means the same hydrophobicity on any structure and two proteins can be compared as they are.
+
+Both views are drawn from the same surface points, so a patch in one lines up exactly with the same place in the other.
+
+**Showing the residues underneath**
+
+Both scripts already load the structure behind the surface, as a grey cartoon with the relevant side chains picked out: red and blue for acidic and basic in the potential view, forest green for the hydrophobic residues in the hydrophobicity view. It is hidden only because the cloud is opaque. To see which residues produce a patch, make the cloud see-through:
+
+.. code-block:: text
+
+    set sphere_transparency, 0.4, surface_ep        # potential view
+    set sphere_transparency, 0.4, hydrophobicity    # hydrophobicity view
+
+Raise or lower the number to taste. Much above 0.5 and the surface colours start to wash out. Toggling the surface object off in the PyMOL object panel works too, and leaves the residues on their own.
+
+The residues shown in green are those the selected hydrophobicity scale scores as hydrophobic, so they follow ``--hydro`` rather than being a fixed list. Note that histidine is only partly charged at pH 7, and that Prodes also places a charge at each chain terminus, so a charged patch may have no coloured side chain beneath it.
+
+**ChimeraX**
+
+The ``.cxc`` scripts are provided for ChimeraX users and are written to mirror the PyMOL ones, but they have not been tested. If one does not behave, the PyMOL scripts are the reference; please open an issue.
+
 Input files
 ------------
 
@@ -110,19 +167,42 @@ The ``ID`` column of the output is **the file name with its last extension remov
 
 Name your files the way you want your rows labelled.
 
-The output CSV
----------------
+The output bundle
+-----------------
 
-One run writes one row. The first column is ``ID``; the rest are the features.
+One run takes one structure and writes one zip bundle. Nothing is appended to anything, so runs are independent and safe to parallelise. The output path must end in ``.zip``.
 
-**If the output file already exists, the new row is appended to it.**
+Unpacked, the bundle holds:
 
 .. code-block:: text
 
-    python -m prodes 1GDW.pdb features.csv
-    python -m prodes 1GPB.pdb features.csv    # features.csv now has two rows
+    1GDW/
+      1GDW_features.csv              the 54 features, one row, first column ID
+      1GDW_surface_points.csv        every surface point: x, y, z, potential, hydrophobicity
+      1GDW_ep.pml                    PyMOL, coloured by electrostatic potential
+      1GDW_hydrophobicity.pml        PyMOL, coloured by hydrophobicity
+      1GDW_ep.cxc                    ChimeraX, electrostatic potential
+      1GDW_hydrophobicity.cxc        ChimeraX, hydrophobicity
+      1GDW_ep.pdb                    the points, potential in the B-factor column
+      1GDW_hydrophobicity.pdb        the points, hydrophobicity in the B-factor column
+      1GDW.pdb                       the structure the run was given
+      prodes_run.json                version, settings and time of the run
+      README.txt                     the same explanation, inside the bundle
 
-If you are re-running a whole set, delete the output file first. A safer strategy is to save the output .csv files individually for each protein, and join later.
+Both point clouds hold the same coordinates and differ only in the value carried in the B-factor column, so the two views describe exactly the same surface.
+
+The point cloud and the features come out of the same calculation, so a figure can never disagree with a feature value.
+
+To read the features back:
+
+.. code-block:: python
+
+    from prodes.output import read_features
+
+    from prodes.output import read_features, read_surface_points
+
+    features = read_features("1GDW.zip")
+    points = read_surface_points("1GDW.zip")     # x, y, z, ep_volts, hydrophobicity
 
 What the features actually are
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -212,15 +292,14 @@ This is the point of the whole exercise, so here is the shape of a complete QSPR
     import prodes
     from prodes.io.pka_converter import convert_propka, write_json
 
-    out_file = Path("features.csv")
-    out_file.unlink(missing_ok=True)          # start clean, since runs append
+    bundles = Path("bundles")
 
     for pdb in sorted(Path("structures").glob("*.pdb")):
         subprocess.run(["propka3", pdb.name], cwd=pdb.parent, check=True)
         pka_json = pdb.with_suffix(".pka.json")
         write_json(convert_propka(str(pdb.with_suffix(".pka"))), str(pka_json))
 
-        prodes.run_prodes(str(pdb), str(out_file), ph=7.4, pkas_file=str(pka_json))
+        prodes.run_prodes(str(pdb), str(bundles / f"{pdb.stem}.zip"), ph=7.4, pkas_file=str(pka_json))
 
 ``check=True`` matters here: without it a structure PROPKA chokes on would fail silently, and the loop would carry on and calculate that protein with default pKa values instead. You would end up with one row in the table quietly computed on a different basis from all the others.
 
@@ -230,7 +309,9 @@ This is the point of the whole exercise, so here is the shape of a complete QSPR
 
     import pandas as pd
 
-    X = pd.read_csv("features.csv")
+    from prodes.output import read_features
+
+    X = pd.concat([read_features(bundle) for bundle in sorted(Path("bundles").glob("*.zip"))])
     y = pd.read_csv("measurements.csv")       # columns: ID, retention_time
 
     data = X.merge(y, on="ID", validate="one_to_one")
@@ -310,12 +391,12 @@ or from Python, which is what you want inside a pipeline
 
 .. code-block:: text
 
-    python -m prodes 1GDW.pdb out.csv --ph 7.4 --pka 1GDW_pka.json
+    python -m prodes 1GDW.pdb 1GDW.zip --ph 7.4 --pka 1GDW_pka.json
 
 .. code-block:: python
 
     import prodes
-    prodes.run_prodes("1GDW.pdb", "out.csv", ph=7.4, pkas_file="1GDW_pka.json")
+    prodes.run_prodes("1GDW.pdb", "1GDW.zip", ph=7.4, pkas_file="1GDW_pka.json")
 
 Steps 1 and 2 are done **once per structure**. Step 3 can then be repeated as often as you like at different pH values against the same JSON file, which is the reason the prediction and the calculation are separate commands rather than one.
 
@@ -340,7 +421,7 @@ The command line and the Python interface do the same work. To reproduce a comma
 .. code-block:: python
 
     import prodes
-    prodes.run_prodes("./tests/data/1GDW.pdb.zip", "example.csv")
+    prodes.run_prodes("./tests/data/1GDW.pdb.zip", "example.zip")
 
 The full signature is ``run_prodes(pdb_file, out_file, pkas_file=None, ph=7, r_probe=1.4, hydro_scale="mj_scaled", full_features=False, mem_limit_mb=None)``.
 
@@ -444,7 +525,7 @@ If you want to control this, the only setting most people need is:
 
 .. code-block:: text
 
-    python -m prodes in.pdb out.csv --n-workers 4
+    python -m prodes in.pdb out.zip --n-workers 4
 
 There is one trap worth knowing about even if you read nothing else. If you are processing **many** proteins, the best throughput comes from running one Prodes process per protein, with ``PRODES_N_WORKERS=1`` set so that each process stays on one core. Workers are cumulative, so ten processes at the default eight workers each would ask your machine for eighty cores.
 

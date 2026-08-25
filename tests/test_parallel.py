@@ -197,7 +197,7 @@ def test_calculate_validates_before_doing_any_work(monkeypatch, tmp_path):
     monkeypatch.setattr("prodes.run.prepare_structure", fail_if_called)
 
     with pytest.raises(ValueError, match="PRODES_N_WORKERS"):
-        calculate(PDB_PATH, str(tmp_path / "output.csv"))
+        calculate(PDB_PATH, str(tmp_path / "bundle.zip"))
 
 
 # -- BLAS thread limiting --
@@ -390,7 +390,7 @@ def test_calculate_leaves_no_state_behind(tmp_path):
     life of the process.
     """
 
-    calculate(PDB_PATH, str(tmp_path / "output.csv"), full_features=True)
+    calculate(PDB_PATH, str(tmp_path / "bundle.zip"), full_features=True)
 
     assert SURFACE_GRID_STATE == {}
     assert AVERAGE_CHARGE_GRID_STATE == {}
@@ -409,15 +409,15 @@ def features_for(monkeypatch, **env):
         **env: environment variables to set for this run.
     """
 
-    import pandas as pd
+    from prodes.output import read_features
 
     for name, value in env.items():
         monkeypatch.setenv(name, value)
 
     with tempfile.TemporaryDirectory() as directory:
-        out_file = str(Path(directory) / "output.csv")
+        out_file = str(Path(directory) / "bundle.zip")
         calculate(PDB_PATH, out_file, full_features=True)
-        return pd.read_csv(out_file).iloc[0].drop("ID").astype(float)
+        return read_features(out_file).iloc[0].drop("ID").astype(float)
 
 
 def assert_features_match(serial, parallel_run):
