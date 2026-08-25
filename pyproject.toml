@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prodes"
-version = "3.0.0"
+version = "4.0.0"
 description = "A package to calculate protein surface descriptors"
 readme = "README.rst"
 license = {text = "MIT"}

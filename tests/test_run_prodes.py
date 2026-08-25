@@ -9,11 +9,10 @@ happen again.
 
 import inspect
 
-import pandas as pd
-
 import prodes
 from prodes import run as run_module
 from prodes.feature_dictionary import FULL_FEATURE_CODES, REDUCED_FEATURE_CODES
+from prodes.output import read_features
 
 PDB_PATH = "tests/data/ARH96693.pdb.zip"
 
@@ -78,14 +77,14 @@ def test_full_features_reaches_the_output(tmp_path):
     """End to end: the wrapper can actually produce the full feature set."""
     tmpdir = tmp_path
 
-    reduced_out = str(tmpdir / "reduced.csv")
+    reduced_out = str(tmpdir / "reduced.zip")
     prodes.run_prodes(PDB_PATH, reduced_out)
 
-    full_out = str(tmpdir / "full.csv")
+    full_out = str(tmpdir / "full.zip")
     prodes.run_prodes(PDB_PATH, full_out, full_features=True)
 
-    reduced_columns = [c for c in pd.read_csv(reduced_out).columns if c != "ID"]
-    full_columns = [c for c in pd.read_csv(full_out).columns if c != "ID"]
+    reduced_columns = [c for c in read_features(reduced_out).columns if c != "ID"]
+    full_columns = [c for c in read_features(full_out).columns if c != "ID"]
 
     assert reduced_columns == list(REDUCED_FEATURE_CODES)
     # As a set: FULL_FEATURE_CODES is reduced-then-dropped, not CSV column order.

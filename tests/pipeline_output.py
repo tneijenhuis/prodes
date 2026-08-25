@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from prodes.output import read_features
 from prodes.run import calculate
 
 
@@ -20,10 +21,10 @@ def _cached_output(pdb_path: str, full_features: bool, pkas_file: str | None) ->
     """Runs the pipeline once and keeps the result for the rest of the session."""
 
     with tempfile.TemporaryDirectory(prefix="prodes_tests_") as directory:
-        out_file = str(Path(directory) / "output.csv")
+        out_file = str(Path(directory) / "bundle.zip")
         calculate(pdb_path, out_file, pkas_file=pkas_file, full_features=full_features)
 
-        return pd.read_csv(out_file)
+        return read_features(out_file)
 
 
 def pipeline_output(pdb_path: str, full_features: bool, pkas_file: str | None = None) -> pd.DataFrame:

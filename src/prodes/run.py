@@ -9,7 +9,9 @@ from prodes.calculations import geometry, grid_wizard
 from prodes.calculations.sasa import shape, shrake_rupley
 from prodes.calculations.standard_equations import trimean
 from prodes.io import parser as ps
+from prodes.output import run_metadata, write_bundle
 from prodes.parallel import run_tasks, validate_settings, worker_mem_limit_mb
+from prodes.viz import surface_point_arrays
 
 load_dotenv()
 
@@ -34,7 +36,11 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser(description="Calculate descriptors from atomic data")
     parser.add_argument("pdb_file", help="file location of a pdb or pqr file", type=str)
-    parser.add_argument("out_file", help="file path of the output csv file", type=str)
+    parser.add_argument(
+        "out_file",
+        help="path of the output zip bundle, which must end in .zip",
+        type=str,
+    )
     parser.add_argument("-p", "--pka", help="file location of the pka propka output", type=str, default=None)
     parser.add_argument("--probe", help="Radius of the surface probe", type=float, default=1.4)
     parser.add_argument("--ph", help="pH of the system", type=float, default=7)
@@ -86,16 +92,6 @@ def parse_arguments():
     mem_limit_mb = arg.mem_limit
 
     return pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale, full_features, mem_limit_mb
-
-
-def open_output_file(out_file):
-    """opens the output file"""
-    return pd.read_csv(out_file)
-
-
-def write_output_file(dataframe, out_file):
-    """writes a CSV file"""
-    dataframe.to_csv(out_file, index=False)
 
 
 def standard_features(values, name="", reduced=False):
@@ -460,7 +456,7 @@ def calculate(
     Arguments
     required:
         pdb_file: path to the pdb file to be analysed
-        out_file: path to the output csv file which should be written
+        out_file: path of the output zip bundle, which must end in .zip.
     Optional:
         pka_file: an output file of PROPKA which is required for custom pKa assignment
         ph: the ph at which protonation states should be calculated
@@ -489,19 +485,22 @@ def calculate(
     print(f"calculating {structure.name}")
     features = calculate_structure_features(structure, ph, r_probe, features, full_features=full_features)
     features = calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, features, full_features=full_features)
+
+    # Read the point values off before the average charge phase runs. That phase
+    # overwrites point.ep with a potential computed from partial rather than
+    # formal charges, so a snapshot taken afterwards would hold a different
+    # physical quantity under the same name, and only when --full-features is set.
+    coords, ep, lipo = surface_point_arrays(surface_points)
+
     if full_features:
         features = calculate_average_chargesurface_grid_features(structure, surface_points, ph, features)
     features = calculate_shell_features(structure, surface_points, ph, features, full_features=full_features, mem_limit_mb=mem_limit_mb)
 
     calculated_features = pd.Series(features).to_frame().transpose()
+    settings = {"ph": ph, "r_probe": r_probe, "hydro_scale": hydro_scale, "full_features": full_features}
+    metadata = run_metadata(pdb_file, settings, len(coords), ep)
 
-    try:
-        calculated_features = pd.concat([open_output_file(out_file), calculated_features])
-
-    except FileNotFoundError:
-        pass
-
-    write_output_file(calculated_features, out_file)
+    return write_bundle(out_file, structure.name, calculated_features, coords, ep, lipo, pdb_file, metadata, hydro_scale)
 
 
 def main():

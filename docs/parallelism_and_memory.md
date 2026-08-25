@@ -40,7 +40,7 @@ Three ways to change it, in order of precedence:
 1. **CLI flag**, which wins over everything else:
 
    ```bash
-   python -m prodes in.pdb out.csv --n-workers 4
+   python -m prodes in.pdb out.zip --n-workers 4
    ```
 
 2. **Environment variable**, in your shell or in a `.env` file (see `.env.example`):
@@ -106,7 +106,7 @@ The budget covers the chunked arrays only. The parsed structure, the grids and t
 ### Setting the memory budget
 
 - **Environment variable**, in your shell or in a `.env` file: `PRODES_MEM_LIMIT_MB=2048`
-- **CLI flag**, which takes precedence: `python -m prodes in.pdb out.csv --mem-limit 2048`
+- **CLI flag**, which takes precedence: `python -m prodes in.pdb out.zip --mem-limit 2048`
 - **Function argument**, when calling Prodes as a library: pass `mem_limit_mb` directly to `prodes.run.calculate(...)`. This is the recommended route inside worker processes, so that you are not relying on environment variables being inherited.
 
 When running several proteins side by side, one process each, RAM is **cumulative** across those processes: each one gets its own budget. Divide the machine's memory by the number of concurrent runs, and leave headroom for the operating system.
