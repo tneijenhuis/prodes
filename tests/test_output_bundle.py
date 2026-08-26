@@ -100,7 +100,13 @@ def test_the_run_record_says_what_was_run(bundle_dir):
 
     record = json.loads((bundle_dir / "prodes_run.json").read_text())
 
-    assert record["settings"] == {"ph": 7, "r_probe": 1.4, "hydro_scale": "mj_scaled", "full_features": False}
+    assert record["settings"] == {
+        "ph": 7,
+        "r_probe": 1.4,
+        "hydro_scale": "mj_scaled",
+        "full_features": False,
+        "ionic_strength_molar": 0.15,
+    }
     assert record["surface_points"] > 0
     assert record["ep_min_volts"] <= record["ep_max_volts"]
     assert record["input_file"].endswith("ARH96693.pdb.zip")

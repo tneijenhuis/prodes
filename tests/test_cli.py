@@ -11,7 +11,7 @@ import os
 
 import pytest
 
-from prodes.run import calculate, main, parse_arguments
+from prodes.run import DEFAULT_IONIC_STRENGTH_MOLAR, calculate, main, parse_arguments
 
 
 def parse(monkeypatch, *arguments):
@@ -26,12 +26,13 @@ def test_defaults_are_the_documented_ones(monkeypatch):
     """A bare invocation gives the reduced feature set and no explicit memory budget."""
 
     monkeypatch.delenv("PRODES_FULL_FEATURES", raising=False)
-    pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale, full_features, mem_limit_mb = parse(monkeypatch)
+    pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale, full_features, mem_limit_mb, ionic_strength_molar = parse(monkeypatch)
 
     assert (pdb_file, out_file, pkas_file) == ("in.pdb", "out.zip", None)
     assert (ph, r_probe, hydro_scale) == (7, 1.4, "mj_scaled")
     assert full_features is False
     assert mem_limit_mb is None
+    assert ionic_strength_molar == DEFAULT_IONIC_STRENGTH_MOLAR
 
 
 def test_n_workers_flag_sets_the_environment_variable(monkeypatch):
@@ -55,7 +56,7 @@ def test_chunksize_flag_sets_the_environment_variable(monkeypatch):
 def test_mem_limit_flag_is_returned_rather_than_exported(monkeypatch):
     """--mem-limit is passed to calculate directly, so it does not need the environment."""
 
-    *_, mem_limit_mb = parse(monkeypatch, "--mem-limit", "256")
+    *_, mem_limit_mb, _ionic_strength = parse(monkeypatch, "--mem-limit", "256")
 
     assert mem_limit_mb == 256
 
@@ -94,10 +95,20 @@ def test_main_forwards_every_parsed_argument(monkeypatch, tmp_path):
 
     main()
 
-    assert captured["args"][:2] == (str(tmp_path / "in.pdb"), str(tmp_path / "out.zip"))
-    assert captured["args"][3] == 5.5
-    assert captured["args"][6] is True
-    assert len(captured["args"]) == 8
+    # Every position is asserted, not a sample of three. main splats this tuple
+    # into calculate positionally, so a parameter inserted in the middle would
+    # silently shift every later argument into the wrong slot.
+    assert captured["args"] == (
+        str(tmp_path / "in.pdb"),
+        str(tmp_path / "out.zip"),
+        None,
+        5.5,
+        1.4,
+        "mj_scaled",
+        True,
+        None,
+        DEFAULT_IONIC_STRENGTH_MOLAR,
+    )
     assert captured["kwargs"] == {}
 
 
@@ -113,4 +124,5 @@ def test_calculate_signature_matches_the_parsed_order():
         "hydro_scale",
         "full_features",
         "mem_limit_mb",
+        "ionic_strength_molar",
     ]

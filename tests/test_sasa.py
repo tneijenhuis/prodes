@@ -49,8 +49,11 @@ COUNT_COLUMNS = {
 # once per feature set for the whole session, shared with the other module that
 # needs the same two runs.
 
-FULL_OUTPUT = pipeline_output(PDB_PATH, full_features=True)
-REDUCED_OUTPUT = pipeline_output(PDB_PATH, full_features=False)
+# Unscreened, because this module's job is to prove the fork still reproduces the
+# original implementation, and the reference file was generated before screening
+# existed. Screening is exercised by tests/test_screening.py.
+FULL_OUTPUT = pipeline_output(PDB_PATH, full_features=True, ionic_strength_molar=0)
+REDUCED_OUTPUT = pipeline_output(PDB_PATH, full_features=False, ionic_strength_molar=0)
 
 ORIGINAL_OUTPUT = pd.read_csv(ORIG_OUTPUT)
 

@@ -7,7 +7,7 @@ Those columns are designed to be used directly as the input features of a machin
 
 Prodes is **completely free, including for commercial use**, under the MIT licence. It needs no external electrostatics solver, no licence server and no web upload. A protein under 1000 residues should only take a few minutes on a normal desktop computer, and seconds on a dedicated linux server.
 
-**Jump to:** `Installation`_ | `Quick start`_ | `Viewing the surface`_ | `The output bundle`_ | `Using the features in a model`_ | `pKa values and protonation states`_ | `Using Prodes from Python`_ | `Speed`_ | `How to cite`_
+**Jump to:** `Installation`_ | `Quick start`_ | `Viewing the surface`_ | `The output bundle`_ | `Ionic strength and screening`_ | `Using the features in a model`_ | `pKa values and protonation states`_ | `Using Prodes from Python`_ | `Speed`_ | `How to cite`_
 
 This is a fork of `tneijenhuis/prodes <https://github.com/tneijenhuis/prodes>`_, a package written by `Tim Neijenhuis <https://www.linkedin.com/in/tim-neijenhuis>`_ during his Ph.D. at the `Marcel Ottens group <https://www.tudelft.nl/en/faculty-of-applied-sciences/about-faculty/departments/biotechnology/research-sections/bioprocess-engineering/marcel-ottens-group/>`_ at the `Delft University of Technology (TU Delft) <https://www.tudelft.nl/>`_. Currently this fork preserves the original algorithm. The changes are performance (a 170x speedup for many proteins, see `Speed`_) and a reduced, non-redundant default feature set (see `The reduced feature set`_).
 
@@ -337,6 +337,38 @@ PLS is a reasonable first choice for this kind of data because the features are 
 
 **A note on sample size.** 54 features is a lot if you have measured 20 proteins. With fewer observations than features, almost any model will fit the training data perfectly and predict nothing. The reduced feature set exists precisely to push that ratio in your favour; do not reach for ``--full-features`` to get more columns unless you have the observations to support them (see `The reduced feature set`_). Always report a score against a holdout blind test set, never a training-set score.
 
+Ionic strength and screening
+-----------------------------
+
+The projected electrostatic potential is damped with distance to account for the mobile ions in a buffer:
+
+.. code-block:: text
+
+    V(point) = sum over charged atoms of   q / (4 pi eps0 eps_r d)  *  exp(-d / lambda)
+
+    lambda = 3.04 / sqrt(I)   Angstrom, the Debye screening length
+
+``I`` is the ionic strength in mol/L, set with ``--ionic-strength``. The default is 0.15, roughly physiological, which gives a screening length of 7.9 Angstrom.
+
+Without this damping every charged atom contributes in full to every surface point, including atoms 60 Angstrom away on the far side of the protein. On a net negative protein, and most soluble proteins are, that adds a large smooth negative offset to the whole surface at once. The local pattern survives underneath it, so rank based comparisons looked fine, but the whole distribution is pushed below zero and genuinely positive patches are reported as negative. With screening, a charge one screening length away keeps about a third of its contribution and one four lengths away keeps under two per cent, so a surface point describes its own neighbourhood.
+
+.. code-block:: text
+
+    python -m prodes 1GDW.pdb 1GDW.zip --ionic-strength 0.035  # a 20 mM sodium phosphate buffer, pH 7
+    python -m prodes 1GDW.pdb 1GDW.zip --ionic-strength 0      # no screening, as before version 5.0
+
+Ionic strength is not the same as the molarity printed on the bottle. For a 1:1 salt such as NaCl they coincide, but a multivalent buffer contributes more: 20 mM sodium phosphate at pH 7 has an ionic strength of about 0.035 mol/L, not 0.02. Ionic strength is ``0.5 * sum(c_i * z_i^2)`` over every ion present.
+
+**Range.** Agreement with a Poisson-Boltzmann reference was measured to be flat between screening lengths of 5 and 12 Angstrom, which is an ionic strength of roughly 0.06 to 0.37 mol/L. Values well outside that, and a 20 mM buffer is outside it, are extrapolation rather than something that has been checked.
+
+**Which value to use.** The ionic strength of the buffer the protein is *binding* in, not the one it elutes at. In a gradient the protein binds at the starting buffer and elutes when the salt rises enough to compete, so the binding condition is a known constant of the experiment rather than the quantity being predicted.
+
+**Setting it to 0 reproduces the results of versions before 5.0 exactly.** That is pinned point by point in ``tests/test_screening.py``, against a Coulomb sum written out independently of the code under test.
+
+**What this is and is not.** The screening length is the Debye length in water, where the relative permittivity is about 78.5. Prodes evaluates its sum at a uniform relative permittivity of 4, where the self consistent value would be about 1.8 Angstrom. Using the water value inside a kernel with a protein dielectric is an empirical correction that mimics screening. It is used because it is what was measured to agree best with a Poisson-Boltzmann reference, not because the two are consistent, and the potential is still not comparable to an APBS calculation despite both being reported in volts.
+
+**Scope.** Screening applies to the surface features, the ``SurfEp`` family: 9 of the 54 default features, and 38 of the 105 with ``--full-features``, the extra 19 being the ``SurfEp*Average`` columns computed from partial rather than formal charges. The ``ShellEp`` features, 9 by default and 19 with the full set, are unchanged, and that is a measured decision rather than an omission: they are computed by a different route which divides the path at the molecular surface and weights the solvent leg with a permittivity of 80 against 4 for the protein, so a distant charge is already damped about twentyfold and the offset that affected the surface never built up. Checked against an APBS equivalent, the unscreened shell agrees at a Spearman of 0.877, and adding screening moved that to 0.855. See ``docs/screening_validation.md``.
+
 pKa values and protonation states
 ----------------------------------
 
@@ -604,7 +636,7 @@ What Prodes offers, then, is:
 * **Any protein.** Most of the field is antibody-specific, often Fv-specific and tied to IMGT numbering.
 * **A fixed-width feature table**, designed as the X matrix of a QSPR or machine learning model. Of the tools above only PROPERMAB shares that intent, and it is academic-only and antibody-only.
 * **pH and per-residue pKa handled properly**, via PROPKA at a pH you choose. Protein-Sol Patches is fixed at pH 6.3 with no titration, PEP-Patch does not titrate, PROPERMAB is fixed at pH 7.4, and TAP assigns charges by residue type.
-* **No external solver.** Nothing else here computes its own electrostatics. The cost is a much cruder physical model — a distance-weighted Coulomb sum at fixed permittivity rather than a Poisson-Boltzmann solution with an explicit dielectric boundary and ionic screening. For ranking a set of related proteins in a regression this is usually adequate; for absolute accuracy of the potential it is not, and APBS is the right tool.
+* **No external solver.** Nothing else here computes its own electrostatics. The cost is a much cruder physical model — a distance-weighted Coulomb sum at fixed permittivity, damped for ionic strength, rather than a Poisson-Boltzmann solution with an explicit dielectric boundary. For ranking a set of related proteins in a regression this is usually adequate; for absolute accuracy of the potential it is not, and APBS is the right tool.
 * **The MIT licence, and no licence server.** For commercial work this rules out PROPERMAB, SAP and AggScore outright, puts MOE, BioLuminate and Discovery Studio behind a per-seat purchase, and makes anything built on NanoShaper awkward to redistribute. PEP-Patch, TNP and Aggrescan3D are the permissively licensed peers.
 
 Three things Prodes does **not** do, which the better tools here do:
@@ -629,7 +661,9 @@ Improvements in this fork
 Output compatibility
 ---------------------
 
-With ``--full-features``, the output is identical to the original Prodes: same 105 columns, same order, same values. This is verified by the regression test in ``tests/test_sasa.py``, which compares against the committed reference file ``tests/data/ARH96693_prodes_orig_output.csv``.
+With ``--full-features``, the output has the same 105 columns in the same order as the original Prodes.
+
+The **values** are identical only with ``--ionic-strength 0``. From version 5.0 the electrostatic potential is screened by default, which changes the 38 ``SurfEp`` columns; the other 67, including every ``ShellEp`` column, are unaffected either way. The regression test in ``tests/test_sasa.py`` therefore runs at zero ionic strength when comparing against the committed reference file ``tests/data/ARH96693_prodes_orig_output.csv``. See `Ionic strength and screening`_.
 
 The default reduced output is a strict subset of those columns, in the same order and with identical values. No column is renamed and no column is recomputed, so a reduced run and a full run of the same structure agree exactly on the 54 columns they share.
 

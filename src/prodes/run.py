@@ -1,4 +1,5 @@
 import argparse
+import math
 import os
 
 import numpy as np
@@ -6,6 +7,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from prodes.calculations import geometry, grid_wizard
+from prodes.calculations.distance_functions import debye_length
 from prodes.calculations.sasa import shape, shrake_rupley
 from prodes.calculations.standard_equations import trimean
 from prodes.io import parser as ps
@@ -24,6 +26,12 @@ load_dotenv()
 # does not stay alive for the rest of the process. Because they are module-level,
 # calculate() is safe to run in several processes but not in several threads:
 # see the note in its docstring.
+# Ionic strength of the buffer in mol/L, used to screen the Coulomb sum. 0.15 is
+# roughly physiological and sits in the middle of the range over which the
+# agreement with a Poisson-Boltzmann reference was measured to be flat. Set 0 to
+# disable screening, which reproduces the unscreened results of earlier versions.
+DEFAULT_IONIC_STRENGTH_MOLAR = 0.15
+
 SURFACE_GRID_STATE: dict = {}
 AVERAGE_CHARGE_GRID_STATE: dict = {}
 SHELL_STATE: dict = {}
@@ -44,6 +52,13 @@ def parse_arguments():
     parser.add_argument("-p", "--pka", help="file location of the pka propka output", type=str, default=None)
     parser.add_argument("--probe", help="Radius of the surface probe", type=float, default=1.4)
     parser.add_argument("--ph", help="pH of the system", type=float, default=7)
+    parser.add_argument(
+        "--ionic-strength",
+        help="ionic strength of the buffer in mol/L, used to screen the electrostatic potential "
+        f"(default: {DEFAULT_IONIC_STRENGTH_MOLAR}; 0 disables screening and reproduces pre-5.0 results)",
+        type=float,
+        default=DEFAULT_IONIC_STRENGTH_MOLAR,
+    )
     parser.add_argument("--hydro", help="Abbreviation of the hydrophobicity scale to be used", type=str, default="mj_scaled")
     parser.add_argument(
         "--full-features",
@@ -90,8 +105,15 @@ def parse_arguments():
     hydro_scale = arg.hydro
     full_features = arg.full_features
     mem_limit_mb = arg.mem_limit
+    ionic_strength_molar = arg.ionic_strength
 
-    return pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale, full_features, mem_limit_mb
+    # Validated here rather than deep in the first phase, so a typo fails in the
+    # first second rather than after the grid has been built. Note nan < 0 is
+    # False, so the comparison alone would let it through.
+    if not math.isfinite(ionic_strength_molar) or ionic_strength_molar < 0:
+        raise ValueError(f"--ionic-strength must be a finite number and not negative, got {ionic_strength_molar}")
+
+    return pdb_file, out_file, pkas_file, ph, r_probe, hydro_scale, full_features, mem_limit_mb, ionic_strength_molar
 
 
 def standard_features(values, name="", reduced=False):
@@ -148,14 +170,16 @@ def process_surface_grid_cell(index: int) -> list:
 
     values = []
     for point in cell.filtered_content("Property_point"):
-        point.set_ep(SURFACE_GRID_STATE["charged_atoms"], SURFACE_GRID_STATE["ph"])
+        point.set_ep(SURFACE_GRID_STATE["charged_atoms"], SURFACE_GRID_STATE["ph"], debye_length=SURFACE_GRID_STATE["debye_length"])
         point.set_lipo(environment, 10, SURFACE_GRID_STATE["hydro_scale"])
         values.append((point.ep, point.lipo))
 
     return values
 
 
-def calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, features: dict, full_features=True):
+def calculate_surface_grid_features(
+    structure, surface_points, ph, hydro_scale, features: dict, full_features=True, ionic_strength_molar=DEFAULT_IONIC_STRENGTH_MOLAR
+):
     """calculates the features from the surface grid"""
 
     reduced = not full_features
@@ -178,6 +202,7 @@ def calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, 
         charged_atoms=np.array([atom for atom in structure.atoms if atom.charge(ph=ph) != 0]),
         ph=ph,
         hydro_scale=hydro_scale,
+        debye_length=debye_length(ionic_strength_molar),
     )
     try:
         cell_values = run_tasks(process_surface_grid_cell, len(cells), "surface grid features")
@@ -246,13 +271,18 @@ def process_average_charge_grid_cell(index: int) -> list:
 
     values = []
     for point in cell.filtered_content("Property_point"):
-        point.set_ep(AVERAGE_CHARGE_GRID_STATE["charged_atoms"], AVERAGE_CHARGE_GRID_STATE["ph"], formal=False)
+        point.set_ep(
+            AVERAGE_CHARGE_GRID_STATE["charged_atoms"],
+            AVERAGE_CHARGE_GRID_STATE["ph"],
+            formal=False,
+            debye_length=AVERAGE_CHARGE_GRID_STATE["debye_length"],
+        )
         values.append(point.ep)
 
     return values
 
 
-def calculate_average_chargesurface_grid_features(structure, surface_points, ph, features: dict):
+def calculate_average_chargesurface_grid_features(structure, surface_points, ph, features: dict, ionic_strength_molar=DEFAULT_IONIC_STRENGTH_MOLAR):
 
     concat = np.concatenate([structure.heavy_atoms, surface_points])
     grid = grid_wizard.Grid(12)
@@ -264,6 +294,7 @@ def calculate_average_chargesurface_grid_features(structure, surface_points, ph,
         cells=cells,
         charged_atoms=np.array([atom for atom in structure.atoms if atom.charge(ph=ph, formal=False) != 0]),
         ph=ph,
+        debye_length=debye_length(ionic_strength_molar),
     )
     try:
         cell_values = run_tasks(process_average_charge_grid_cell, len(cells), "average charge surface grid features")
@@ -350,6 +381,14 @@ def calculate_shell_features(structure, surface_points, ph: float, features: dic
 
     reduced = not full_features
 
+    # Deliberately not screened, unlike the surface grid. This model divides the
+    # path at the molecular surface and weights the solvent leg by a relative
+    # permittivity of 80 against 4 for the protein leg, so a distant charge is
+    # already damped about twenty fold relative to the surface calculation and
+    # the monopole term never dominates here the way it did there. Measured
+    # against an APBS equivalent summed at the same projected points, the
+    # unscreened shell agrees at a Spearman of 0.877; adding screening moved that
+    # to 0.855. See docs/screening_validation.md.
     surface_coords = np.array([[p.x, p.y, p.z] for p in surface_points])
     plane_points = geometry.Sunflower_sphere(structure.x, structure.y, structure.z, 1, numb_of_planes).points
     charged_coords, charged_charges = charged_atom_arrays(structure.heavy_atoms, ph)
@@ -450,6 +489,7 @@ def calculate(
     hydro_scale="mj_scaled",
     full_features=False,
     mem_limit_mb=None,
+    ionic_strength_molar=DEFAULT_IONIC_STRENGTH_MOLAR,
 ):
     """Calculates a list of supported features and returns a csv file
 
@@ -464,6 +504,10 @@ def calculate(
         hydro_scale: the abbreviation of the hydrophobicity scale used (scales can be found in data/hydrophobicity)
         full_features: when True, calculates the full legacy 105-feature set including
             redundant features. Defaults to False for the reduced, non-redundant set.
+        ionic_strength_molar: ionic strength of the buffer in mol/L. Mobile ions
+            screen the projected electrostatic potential, so a surface point
+            responds mainly to nearby charges. 0 disables screening and
+            reproduces the results of versions before 5.0.
         mem_limit_mb: memory budget in MB for the intermediate NumPy arrays of this
             run, divided among the workers. If None, falls back to the
             PRODES_MEM_LIMIT_MB env var (default 2048). Pass explicitly when calling
@@ -484,7 +528,9 @@ def calculate(
     features = {"ID": structure.name}
     print(f"calculating {structure.name}")
     features = calculate_structure_features(structure, ph, r_probe, features, full_features=full_features)
-    features = calculate_surface_grid_features(structure, surface_points, ph, hydro_scale, features, full_features=full_features)
+    features = calculate_surface_grid_features(
+        structure, surface_points, ph, hydro_scale, features, full_features=full_features, ionic_strength_molar=ionic_strength_molar
+    )
 
     # Read the point values off before the average charge phase runs. That phase
     # overwrites point.ep with a potential computed from partial rather than
@@ -493,11 +539,17 @@ def calculate(
     coords, ep, lipo = surface_point_arrays(surface_points)
 
     if full_features:
-        features = calculate_average_chargesurface_grid_features(structure, surface_points, ph, features)
+        features = calculate_average_chargesurface_grid_features(structure, surface_points, ph, features, ionic_strength_molar=ionic_strength_molar)
     features = calculate_shell_features(structure, surface_points, ph, features, full_features=full_features, mem_limit_mb=mem_limit_mb)
 
     calculated_features = pd.Series(features).to_frame().transpose()
-    settings = {"ph": ph, "r_probe": r_probe, "hydro_scale": hydro_scale, "full_features": full_features}
+    settings = {
+        "ph": ph,
+        "r_probe": r_probe,
+        "hydro_scale": hydro_scale,
+        "full_features": full_features,
+        "ionic_strength_molar": ionic_strength_molar,
+    }
     metadata = run_metadata(pdb_file, settings, len(coords), ep)
 
     return write_bundle(out_file, structure.name, calculated_features, coords, ep, lipo, pdb_file, metadata, hydro_scale)

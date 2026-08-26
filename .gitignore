@@ -10,3 +10,7 @@ benchmark_results
 
 # Similar tool analysis and issue drafts, not for publication
 docs/similar_tools/*
+
+# APBS comparison outputs and the capture file APBS writes into its working directory
+apbs_results
+io.mc
