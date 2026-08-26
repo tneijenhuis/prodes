@@ -507,7 +507,7 @@ def calculate(
         ionic_strength_molar: ionic strength of the buffer in mol/L. Mobile ions
             screen the projected electrostatic potential, so a surface point
             responds mainly to nearby charges. 0 disables screening and
-            reproduces the results of versions before 5.0.
+            gives the unscreened potential of versions before 5.0.
         mem_limit_mb: memory budget in MB for the intermediate NumPy arrays of this
             run, divided among the workers. If None, falls back to the
             PRODES_MEM_LIMIT_MB env var (default 2048). Pass explicitly when calling

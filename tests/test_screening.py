@@ -6,11 +6,17 @@ charge's field beyond a few Angstrom, so the unscreened sum added a large smooth
 offset from the whole protein on top of the local pattern a surface point should
 describe. Screening damps each contribution by exp(-d / debye_length).
 
-Two properties matter enough to pin. Zero ionic strength must reproduce the old
-behaviour exactly, because that is what makes the change auditable and what the
-regression fixtures depend on. And screening must actually be on by default,
-because a default quietly reverting to zero would restore the old behaviour with
-every test still passing.
+Two properties matter enough to pin. Zero ionic strength must give back the
+unscreened sum, because that is what makes the change auditable, and it is
+checked against a formula written out independently of the code under test
+rather than against the code itself. And screening must actually be on by
+default, because a default quietly reverting to zero would restore the old
+behaviour with every test still passing.
+
+Note that zero does not reproduce the released 4.x feature values exactly. The
+potential is now stored to three decimals rather than two, which was a separate
+correction: at two decimals a point between 0 and 0.005 rounded to zero and left
+the positive population, and the error only ever subtracted.
 """
 
 import math
@@ -20,7 +26,7 @@ import numpy as np
 import pytest
 
 from prodes.calculations.distance_functions import debye_length
-from prodes.core.point import Property_point
+from prodes.core.point import EP_DECIMALS, Property_point
 from prodes.io.parser import PDBparser
 from prodes.output import read_features, read_surface_points
 from prodes.run import DEFAULT_IONIC_STRENGTH_MOLAR, calculate
@@ -49,7 +55,7 @@ def unscreened_potential(point, charged_atoms, ph=7):
     charges = np.array([atom.charge(ph=ph) for atom in charged_atoms]) * 1.6e-19
     distances = np.linalg.norm(coords - np.array([point.x, point.y, point.z]), axis=1) * 1e-10
 
-    return round(float(np.sum(charges / (4 * 8.854e-12 * distances * 4 * np.pi))), 2)
+    return round(float(np.sum(charges / (4 * 8.854e-12 * distances * 4 * np.pi))), EP_DECIMALS)
 
 
 def screened_potential(point, charged_atoms, lam, ph=7):
@@ -64,7 +70,7 @@ def screened_potential(point, charged_atoms, lam, ph=7):
     charges = np.array([atom.charge(ph=ph) for atom in charged_atoms]) * 1.6e-19
     angstrom = np.linalg.norm(coords - np.array([point.x, point.y, point.z]), axis=1)
 
-    return round(float(np.sum(charges * np.exp(-angstrom / lam) / (4 * 8.854e-12 * (angstrom * 1e-10) * 4 * np.pi))), 2)
+    return round(float(np.sum(charges * np.exp(-angstrom / lam) / (4 * 8.854e-12 * (angstrom * 1e-10) * 4 * np.pi))), EP_DECIMALS)
 
 
 def test_the_screening_strength_is_exactly_the_debye_length(atoms):

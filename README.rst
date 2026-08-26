@@ -355,7 +355,7 @@ Without this damping every charged atom contributes in full to every surface poi
 .. code-block:: text
 
     python -m prodes 1GDW.pdb 1GDW.zip --ionic-strength 0.035  # a 20 mM sodium phosphate buffer, pH 7
-    python -m prodes 1GDW.pdb 1GDW.zip --ionic-strength 0      # no screening, as before version 5.0
+    python -m prodes 1GDW.pdb 1GDW.zip --ionic-strength 0      # no screening, the pre-5.0 physics
 
 Ionic strength is not the same as the molarity printed on the bottle. For a 1:1 salt such as NaCl they coincide, but a multivalent buffer contributes more: 20 mM sodium phosphate at pH 7 has an ionic strength of about 0.035 mol/L, not 0.02. Ionic strength is ``0.5 * sum(c_i * z_i^2)`` over every ion present.
 
@@ -363,7 +363,9 @@ Ionic strength is not the same as the molarity printed on the bottle. For a 1:1 
 
 **Which value to use.** The ionic strength of the buffer the protein is *binding* in, not the one it elutes at. In a gradient the protein binds at the starting buffer and elutes when the salt rises enough to compete, so the binding condition is a known constant of the experiment rather than the quantity being predicted.
 
-**Setting it to 0 reproduces the results of versions before 5.0 exactly.** That is pinned point by point in ``tests/test_screening.py``, against a Coulomb sum written out independently of the code under test.
+**Setting it to 0 gives the unscreened potential of versions before 5.0.** That is pinned point by point in ``tests/test_screening.py`` against a Coulomb sum written out independently of the code under test.
+
+The values are not quite identical to the released 4.x numbers, for a separate reason. The potential is now stored to three decimals rather than two. At two, a point whose potential fell between 0 and 0.005 rounded to zero, and since the positive count tests for greater than zero, that point silently left the positive population. Nothing ever rounded into it, so the error only ever subtracted, undercounting ``NSurfPosEp`` by up to about six per cent on the screened potential and around one per cent without it. Three decimals brings that under one per cent. The extra digit is not physically meaningful, but it keeps the threshold from eating real points.
 
 **What this is and is not.** The screening length is the Debye length in water, where the relative permittivity is about 78.5. Prodes evaluates its sum at a uniform relative permittivity of 4, where the self consistent value would be about 1.8 Angstrom. Using the water value inside a kernel with a protein dielectric is an empirical correction that mimics screening. It is used because it is what was measured to agree best with a Poisson-Boltzmann reference, not because the two are consistent, and the potential is still not comparable to an APBS calculation despite both being reported in volts.
 

@@ -32,7 +32,7 @@ def run_prodes(
             redundant features. Defaults to False for the reduced, non-redundant set.
         ionic_strength_molar: ionic strength of the buffer in mol/L, which screens
             the projected electrostatic potential. 0 disables screening and
-            reproduces the results of versions before 5.0.
+            gives the unscreened potential of versions before 5.0.
         mem_limit_mb: memory budget in MB for the intermediate NumPy arrays of this
             run, divided among the workers. Pass explicitly in worker processes
             rather than relying on the PRODES_MEM_LIMIT_MB environment variable.

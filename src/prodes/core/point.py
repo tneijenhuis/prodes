@@ -3,21 +3,19 @@ from dataclasses import dataclass
 
 import numpy as np
 
-# Decimal places the projected potential is rounded to. Kept at the value the
-# unscreened implementation used, so that zero ionic strength reproduces the
-# pre-5.0 numbers bit for bit and this change stays auditable.
+# Decimal places the projected potential is rounded to.
 #
-# The rounding is not free. A point whose exact potential is between 0 and 0.005
-# rounds to 0.00 and drops out of the positive set, which biases NSurfPosEp
-# downwards by a measured 0.6 to 5.6 per cent depending on the structure. That
-# bias is one sided and it is worse on the screened potential, where more points
-# sit near zero. Three places would reduce it to under 0.7 per cent.
+# Rounding costs points near zero. A point whose exact potential lies between 0
+# and 0.005 rounds to 0.00, and since the positive count tests for greater than
+# zero, that point leaves the positive population. Nothing ever rounds into the
+# population from outside, so the error is one sided: the counts can only fall.
 #
-# It is left alone here because it is not a screening problem: the same bias is
-# present in the shipped unscreened code at 0.6 to 0.9 per cent, so changing it
-# would fold an unrelated correction into a physics change and cost the exact
-# reproduction guarantee. Worth fixing on its own.
-EP_DECIMALS = 2
+# At two places, which is what versions before 5.0 used, that undercounted
+# NSurfPosEp by a measured 0.6 to 5.6 per cent depending on the structure. It is
+# worse on the screened potential, which spans a narrower range and so leaves
+# more points close to zero. Three places reduces it to under 0.7 per cent, at
+# the cost of a third digit that is not physically meaningful but is harmless.
+EP_DECIMALS = 3
 
 
 @dataclass
