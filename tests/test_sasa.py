@@ -49,8 +49,11 @@ COUNT_COLUMNS = {
 # once per feature set for the whole session, shared with the other module that
 # needs the same two runs.
 
-FULL_OUTPUT = pipeline_output(PDB_PATH, full_features=True)
-REDUCED_OUTPUT = pipeline_output(PDB_PATH, full_features=False)
+# Unscreened, because this module's job is to prove the fork still reproduces the
+# original implementation, and the reference file was generated before screening
+# existed. Screening is exercised by tests/test_screening.py.
+FULL_OUTPUT = pipeline_output(PDB_PATH, full_features=True, ionic_strength_molar=0)
+REDUCED_OUTPUT = pipeline_output(PDB_PATH, full_features=False, ionic_strength_molar=0)
 
 ORIGINAL_OUTPUT = pd.read_csv(ORIG_OUTPUT)
 
@@ -63,7 +66,21 @@ def test_all_columns_present():
 
 
 def test_feature_values_match_original():
-    """All feature values should match the original output within tolerance."""
+    """All feature values should match the original output within tolerance.
+
+    The reference was produced by the original implementation, which rounded the
+    projected potential to two decimals. This fork rounds to three, because at two
+    a point whose potential fell between 0 and 0.005 rounded to zero and left the
+    positive population, undercounting it by up to about six per cent. The
+    tolerances below absorb that difference and nothing larger.
+
+    Two of them are relative rather than absolute. A Sum feature adds one term per
+    surface point, so a per-point rounding difference of at most 0.0005 accumulates
+    across roughly seven thousand points; judging that by the same absolute 0.01
+    used for a mean would fail on arithmetic that is working correctly. A count
+    feature moves when a point near zero crosses the boundary, which is exactly
+    the bias being removed.
+    """
     calc = FULL_OUTPUT.iloc[0].drop("ID")
     orig = ORIGINAL_OUTPUT.iloc[0].drop("ID")
 
@@ -73,14 +90,21 @@ def test_feature_values_match_original():
         orig_val = float(orig[col])
 
         if col in COUNT_COLUMNS:
-            tolerance = 5
+            tolerance = 10
         elif "Shell" in col:
             tolerance = 0.05
+        elif "Sum" in col:
+            # A Sum adds one term per surface point, so per-point rounding
+            # differences accumulate: hence the relative part. For the Pos and Neg
+            # families the set of points summed can also change, when a point near
+            # zero crosses the threshold, and each such point contributes less
+            # than 0.005 by definition: hence the floor.
+            tolerance = max(0.05, abs(orig_val) * 1e-4)
         else:
             tolerance = 0.01
 
         if abs(calc_val - orig_val) > tolerance:
-            mismatches.append(f"{col}: orig={orig_val}, calc={calc_val}, " f"diff={abs(calc_val - orig_val):.6f}, tol={tolerance}")
+            mismatches.append(f"{col}: orig={orig_val}, calc={calc_val}, " f"diff={abs(calc_val - orig_val):.6f}, tol={tolerance:.4f}")
 
     assert len(mismatches) == 0, f"Value mismatches for {len(mismatches)} columns:\n" + "\n".join(mismatches[:20])
 

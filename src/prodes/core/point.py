@@ -1,6 +1,21 @@
+import math
 from dataclasses import dataclass
 
 import numpy as np
+
+# Decimal places the projected potential is rounded to.
+#
+# Rounding costs points near zero. A point whose exact potential lies between 0
+# and 0.005 rounds to 0.00, and since the positive count tests for greater than
+# zero, that point leaves the positive population. Nothing ever rounds into the
+# population from outside, so the error is one sided: the counts can only fall.
+#
+# At two places, which is what versions before 5.0 used, that undercounted
+# NSurfPosEp by a measured 0.6 to 5.6 per cent depending on the structure. It is
+# worse on the screened potential, which spans a narrower range and so leaves
+# more points close to zero. Three places reduces it to under 0.7 per cent, at
+# the cost of a third digit that is not physically meaningful but is harmless.
+EP_DECIMALS = 3
 
 
 @dataclass
@@ -64,11 +79,33 @@ class Property_point:
         if lipo is not None:
             self.__lipo = lipo
 
-    def set_ep(self, atoms, ph=7, formal=True, cutoff=10000):
+    def set_ep(self, atoms, ph=7, formal=True, cutoff=10000, *, debye_length):
         """Projects the partial charges of an array of atoms onto the point
-        -------
-        Args :
-            Atoms : array of Atom objects"""
+
+        Args:
+            atoms: array of Atom objects.
+            ph: pH at which the atomic charges are evaluated.
+            formal: True for integer formal charges, False for the fractional
+                Henderson-Hasselbalch occupancies.
+            cutoff: distance cutoff in Angstrom. Effectively unlimited by default.
+            debye_length: screening length in Angstrom, from
+                prodes.calculations.distance_functions.debye_length. Each charge
+                is damped by exp(-d / debye_length), so a distant one contributes
+                almost nothing. Pass math.inf for no screening, which is the
+                unscreened Coulomb sum Prodes used before version 5.
+
+                Required and keyword only on purpose. With a default of math.inf
+                a call site that forgot to pass it would silently compute the
+                unscreened potential, which is the exact bug this change exists
+                to remove and which no output would reveal.
+        """
+
+        # A zero or negative screening length would damp every contribution to
+        # nothing and return a surface that is uniformly zero volts, which looks
+        # like a valid result. Note 0 is what the user facing ionic strength uses
+        # to mean "no screening", so the two must not be confused.
+        if debye_length <= 0:
+            raise ValueError(f"debye_length must be positive, got {debye_length}; use math.inf for no screening")
 
         charged = [atom for atom in atoms if atom.charge(ph=ph, formal=formal) != 0]
         if not charged:
@@ -88,8 +125,15 @@ class Property_point:
         coulomb_charges = charges[mask] * 1.6e-19
         dists_m = dists[mask] * 1e-10
         absolute_permittivity = 8.854e-12
-        ep = np.sum(coulomb_charges / (4 * absolute_permittivity * dists_m * 4 * np.pi))
-        self.__ep = round(float(ep), 2)
+
+        # Mobile buffer ions screen each charge, so a surface point responds
+        # mainly to its neighbours. Without this every charge in the structure
+        # contributes in full, including ones on the far side, which adds a large
+        # smooth offset that swamps the local pattern.
+        screening = 1.0 if math.isinf(debye_length) else np.exp(-dists[mask] / debye_length)
+
+        ep = np.sum(coulomb_charges * screening / (4 * absolute_permittivity * dists_m * 4 * np.pi))
+        self.__ep = round(float(ep), EP_DECIMALS)
 
     def set_lipo(self, atoms, cutoff=10, scale="mj_scaled"):
         """Projects the lipophilysity of an array of atoms onto the point

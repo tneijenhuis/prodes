@@ -94,11 +94,19 @@ here can never disagree with a number in the feature table.
 WHAT THE POTENTIAL IS, AND IS NOT
 ---------------------------------
 
-The electrostatic potential is a Coulomb sum with a uniform relative
-permittivity of 4. It has no solvent screening, no mobile ions and no dielectric
-boundary, so although it is reported in volts it is not comparable to a
-Poisson-Boltzmann calculation such as APBS. Treat it as a relative description
-of one protein's surface, not as a physical potential.
+The electrostatic potential is a Coulomb sum at a uniform relative permittivity
+of 4, damped with distance to account for the mobile ions in the buffer. The
+ionic strength used is recorded in prodes_run.json; 0 means no damping.
+
+It has no dielectric boundary, and the damping length is the one for bulk water
+rather than the value consistent with a permittivity of 4, so although it is
+reported in volts it is not comparable to a Poisson-Boltzmann calculation such
+as APBS. Treat it as a relative description of one protein's surface.
+
+Note the ShellEp features in the feature table are computed by a different route
+and are not damped. That route already weights the solvent part of the path far
+more heavily, so it did not have the problem the damping fixes. See the
+repository README.
 """
 
 
