@@ -1,4 +1,8 @@
+import logging
+
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class Structure:
@@ -13,6 +17,9 @@ class Structure:
         self._z = None
         self._heavy_atoms = None
         self.surface_done = False
+        # Filled in by prodes.calculations.disulfides.assign_disulfides, which
+        # the parser calls on every structure it reads.
+        self.disulfides = []
 
     def _compute_centroid(self):
         coords = np.array([[a.x, a.y, a.z] for a in self.heavy_atoms])
@@ -196,11 +203,72 @@ class Structure:
             atom.y = y_rotated + self.y
             atom.z = z_rotated + self.z
 
-    def redo_pkas(self, pka_dict):
-        """Takes a dictionary of {residues_numbers : pka}.
-        Changes the pka all residues in the dict"""
+    def titratable_groups(self):
+        """Returns every (residue, group key) pair in the structure that could take a predicted pKa.
 
+        A disulfide-bonded cysteine is not among them: it has no titratable side
+        chain, so a pKa predictor is right to say nothing about it.
+        """
+
+        return [(residue, key) for residue in self.residues for group in (residue.pkas or []) for key in group]
+
+    def redo_pkas(self, pka_dict):
+        """Applies predicted pKa values from a file, one titratable group at a time.
+
+        Takes {residue number: [{group: pka}]}, as read by
+        prodes.io.parser.read_pka, where the group is a three letter residue
+        name for a side chain or "N+" or "C-" for a terminus.
+
+        Values are merged into the residue's own groups rather than replacing
+        its list wholesale. Replacing it meant that a file naming a residue's
+        side chain but not its terminus deleted the terminal pKa, after which
+        the terminal atom silently took its charge from the side-chain value.
+        Groups the file does not mention keep their default, which is what the
+        README has always promised.
+
+        Two kinds of entry are dropped rather than applied:
+
+        - a side-chain pKa for a cysteine that is in a disulfide, because the
+          group it predicts does not exist. PROPKA agrees, reporting such a
+          cysteine as 99.99, its marker for "does not titrate"; a real value
+          from another predictor is logged at info level before it is discarded.
+        - a pKa for a group the residue does not have at all, for instance a
+          serine pKa from H++. Such an entry used to reach charged_atoms and
+          raise a TypeError there.
+
+        Groups the file leaves out are counted and reported. They keep the
+        textbook value for their residue type, which is usually not what the
+        absence was meant to convey.
+        """
+
+        from prodes.io.pka_converter import PROPKA_NOT_TITRATABLE
+
+        applied = set()
         for residue in self.residues:
-            if residue.number in pka_dict:
-                pka = pka_dict[residue.number]
-                residue._pka = pka
+            for group in pka_dict.get(residue.number, []):
+                for key, pka in group.items():
+
+                    if residue.set_group_pka(key, pka):
+                        applied.add((id(residue), key))
+
+                    elif residue.disulfide_partner is not None and key == residue.name:
+                        if pka != PROPKA_NOT_TITRATABLE:
+                            logger.info(
+                                "the pKa file gives %s %s a pKa of %s, but it is bonded into a disulfide and cannot titrate; ignoring the predicted value",
+                                residue.name,
+                                residue.number,
+                                pka,
+                            )
+
+                    else:
+                        logger.warning("the pKa file gives %s %s a %s pKa, which that residue does not have; ignoring it", residue.name, residue.number, key)
+
+        missing = [(residue, key) for residue, key in self.titratable_groups() if (id(residue), key) not in applied]
+        if missing:
+            named = ", ".join(f"{key} {residue.number}" for residue, key in missing[:5])
+            logger.warning(
+                "%d titratable groups are not in the pKa file and keep the textbook value for their residue type: %s%s",
+                len(missing),
+                named,
+                ", ..." if len(missing) > 5 else "",
+            )

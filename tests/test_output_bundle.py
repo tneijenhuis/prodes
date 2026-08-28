@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from prodes.output import read_features, read_surface_points, write_bundle
+from prodes.output import read_features, read_surface_points, run_metadata, write_bundle
 from prodes.run import calculate
 from prodes.viz import HYDROPHOBIC_CUTOFF, STRONGLY_HYDROPHOBIC_CUTOFF, ep_colouring, point_pdb_line, pymol_script, symmetric_limit, write_point_pdb
 
@@ -107,6 +107,9 @@ def test_the_run_record_says_what_was_run(bundle_dir):
         "full_features": False,
         "ionic_strength_molar": 0.15,
     }
+    # ARH96693 is an AlphaFold model with three cysteines and no disulfide, so
+    # the key has to be present and zero rather than absent.
+    assert record["disulfides"] == 0
     assert record["surface_points"] > 0
     assert record["ep_min_volts"] <= record["ep_max_volts"]
     assert record["input_file"].endswith("ARH96693.pdb.zip")
@@ -380,3 +383,16 @@ def test_write_bundle_returns_the_path_it_wrote(tmp_path):
 
     assert written == tmp_path / "out.zip"
     assert zipfile.is_zipfile(written)
+
+
+def test_the_run_record_carries_the_disulfide_count():
+    """The count is how a user checks that detection saw what they expected.
+
+    It is metadata rather than a feature column: the feature set is pinned by the
+    two YAML files and asserted column by column elsewhere, and a structural
+    property of the input does not belong among descriptors of its surface.
+    """
+
+    record = run_metadata("structure.pdb", {}, 10, np.array([0.0, 1.0]), disulfides=17)
+
+    assert record["disulfides"] == 17

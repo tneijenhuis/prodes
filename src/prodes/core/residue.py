@@ -12,6 +12,7 @@ class Residue:
         self._pka = _pka
         self.terminus = terminus
         self._heavy_atoms = None
+        self.disulfide_partner = None
 
     @property
     def heavy_atoms(self):
@@ -28,12 +29,24 @@ class Residue:
 
     @property
     def pkas(self):
+        """The titratable groups of this residue, as [{group: pka}], or None if it has none.
+
+        The side chain comes first and the terminus second, but nothing should
+        rely on that: read a value with group_pka or side_chain_pka instead of
+        by position, or a residue whose side chain is missing hands out its
+        terminal pKa in place of one it does not have.
+        """
+
         if self._pka is None:
             from prodes import data
 
             pka = data.residue_data(self.name)["pka"]
             pkas = []
-            if pka is not None:
+            # A cysteine in a disulfide has no thiol proton and does not titrate
+            # at all, so it gets no side-chain entry, the same as a residue that
+            # was never titratable. Doing it here rather than in charge() means
+            # every consumer of pkas agrees about it.
+            if pka is not None and self.disulfide_partner is None:
                 pkas.append({self.name: pka})
             if self == self.chain.residues[0]:
                 pkas.append({"N+": data.n_term_pka()})
@@ -43,6 +56,56 @@ class Residue:
                 self._pka = pkas
 
         return self._pka
+
+    def group_pka(self, key):
+        """Returns the pKa of one titratable group, or None if this residue has no such group.
+
+        The key is a three-letter residue name for a side chain, or "N+" or
+        "C-" for a terminus.
+        """
+
+        for group in self.pkas or []:
+            if key in group:
+                return group[key]
+
+        return None
+
+    @property
+    def side_chain_pka(self):
+        """Returns the pKa of the titratable side chain, or None if there is none.
+
+        None means the group does not exist, which covers both a residue type
+        that never titrates and a cysteine that is bonded into a disulfide.
+        """
+
+        return self.group_pka(self.name)
+
+    def set_group_pka(self, key, pka):
+        """Replaces the pKa of one group, leaving the residue's other groups alone.
+
+        Returns True when the residue has that group and the value was applied,
+        and False when it does not, which is how a caller can tell that a
+        predicted value has nowhere to go.
+        """
+
+        for group in self.pkas or []:
+            if key in group:
+                group[key] = pka
+                return True
+
+        return False
+
+    def mark_disulfide_partner(self, other):
+        """Records which cysteine this one's SG is bonded to, or None for none.
+
+        Clearing the cached pKas keeps the residue correct even when something
+        has already read them, so detection does not have to be the first thing
+        that touches a freshly parsed structure, and re-running it does not
+        leave a stale partner behind.
+        """
+
+        self.disulfide_partner = other
+        self._pka = None
 
     @property
     def mass(self):

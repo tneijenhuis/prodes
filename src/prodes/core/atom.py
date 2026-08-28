@@ -64,7 +64,19 @@ class Atom:
         return self._radius
 
     def charge(self, ph=7, formal=True):
-        """Returns the charge of a atom"""
+        """Returns the charge of a atom
+
+        Which atoms of a residue can carry a charge comes from the residue type,
+        but the pKa comes from this particular residue, looked up by group name.
+        Reading it by position instead, as this used to, breaks in two ways: a
+        residue whose side chain does not titrate, a cysteine in a disulfide,
+        has no side-chain entry to read, and a residue whose terminus entry
+        happens to come first hands the terminal pKa to the side chain.
+
+        A group with no pKa carries no charge. That is the route by which a
+        disulfide-bonded cysteine comes out neutral, here and therefore in every
+        feature built on top of this.
+        """
 
         from prodes import data
         from prodes.calculations.standard_equations import neg_charge, pos_charge
@@ -73,54 +85,44 @@ class Atom:
 
         residue_data = data.residue_data(self.residue_name)
         potential_charge = residue_data["potential_charge"]
-        if potential_charge is not None:
+        if potential_charge is not None and self.name in residue_data["charged_atoms"]:
 
-            if self.name in residue_data["charged_atoms"]:
+            pka = self.residue.side_chain_pka
+            if pka is not None:
+                charged_atoms = len(residue_data["charged_atoms"])
+
                 if formal is True:
                     if potential_charge > 0:
-                        if list(self.residue.pkas[0].values())[0] > ph:
-                            charge = 1 / len(residue_data["charged_atoms"])
-                        else:
-                            charge = 0
+                        charge = 1 / charged_atoms if pka > ph else 0
 
                     elif potential_charge < 0:
-                        if list(self.residue.pkas[0].values())[0] < ph:
-                            charge = -1 / len(residue_data["charged_atoms"])
-                        else:
-                            charge = 0
+                        charge = -1 / charged_atoms if pka < ph else 0
 
                 else:
                     if potential_charge > 0:
-                        charge = pos_charge(list(self.residue.pkas[0].values())[0], ph) / len(residue_data["charged_atoms"])
+                        charge = pos_charge(pka, ph) / charged_atoms
 
                     else:
-                        charge = neg_charge(list(self.residue.pkas[0].values())[0], ph) / len(residue_data["charged_atoms"])
+                        charge = neg_charge(pka, ph) / charged_atoms
 
-        if self.name == self.residue.terminus:
+        if self.name == self.residue.terminus and self.name in ("N", "C"):
 
-            if formal is True:
-                if self.name == "N":
-                    pka = list(self.residue.pkas[-1].values())[0]
-                    if pka > ph:
-                        charge = 1
+            pka = self.residue.group_pka("N+" if self.name == "N" else "C-")
+            if pka is not None:
 
-                    else:
-                        charge = 0
-
-                elif self.name == "C":
-                    pka = list(self.residue.pkas[-1].values())[0]
-                    if pka < ph:
-                        charge = -1
+                if formal is True:
+                    if self.name == "N":
+                        charge = 1 if pka > ph else 0
 
                     else:
-                        charge = 0
+                        charge = -1 if pka < ph else 0
 
-            else:
-                if self.name == "N":
-                    charge = pos_charge(list(self.residue.pkas[-1].values())[0], ph)
+                else:
+                    if self.name == "N":
+                        charge = pos_charge(pka, ph)
 
-                elif self.name == "C":
-                    charge = neg_charge(list(self.residue.pkas[-1].values())[0], ph)
+                    else:
+                        charge = neg_charge(pka, ph)
 
         return charge
         # if self._charge is None:

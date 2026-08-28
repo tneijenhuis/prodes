@@ -186,7 +186,8 @@ Unpacked, the bundle holds:
       1GDW_ep.pdb                    the points, potential in the B-factor column
       1GDW_hydrophobicity.pdb        the points, hydrophobicity in the B-factor column
       1GDW.pdb                       the structure the run was given
-      prodes_run.json                version, settings and time of the run
+      prodes_run.json                version, settings, time of the run, and
+                                     how many disulfide bonds were found
       README.txt                     the same explanation, inside the bundle
 
 Both point clouds hold the same coordinates and differ only in the value carried in the B-factor column, so the two views describe exactly the same surface.
@@ -380,7 +381,7 @@ Left to itself, Prodes uses **one textbook pKa per residue type**: every asparta
 
 **PROPKA predicts a pKa for each individual residue from its structural environment**, and Prodes reads those predictions. This is the recommended default. It is a small, free, MIT-licensed program from the Jensen group, it installs on Windows, macOS and Linux, and on a normal protein it finishes in seconds. There is very little reason not to use it.
 
-How much does it matter? On 1GDW, feeding in PROPKA values changes **18 of the 54 features**, moving the isoelectric point from 8.9 to 10.6 and the formal charge from +7 to +8. In a larger test across 819 AlphaFold structures it changed 22 features, the most affected being ``SurfEpMinFormal`` at only R² = 0.82 between the two runs (`full report <docs/identification_of_propka_dependent_features.md>`_).
+How much does it matter? On 1GDW, feeding in PROPKA values changes **19 of the 54 features**, moving the isoelectric point from 10.34 to 10.57 and the formal charge from +7 to +8. In a larger test across 819 AlphaFold structures it changed 22 features, the most affected being ``SurfEpMinFormal`` at only R² = 0.82 between the two runs (`full report <docs/identification_of_propka_dependent_features.md>`_).
 
 .. important::
 
@@ -439,6 +440,42 @@ Steps 1 and 2 are done **once per structure**. Step 3 can then be repeated as of
     ``--pka`` takes the **converted JSON**, not PROPKA's own output. Passing a raw ``.pka`` file straight to ``--pka`` fails with a ``JSONDecodeError``.
 
 Residues that appear in the file get the predicted value; every other residue keeps its default. So a prediction covering only the titratable residues, which is what these tools produce, is complete as far as Prodes is concerned.
+
+Cysteines and disulfide bonds
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A cysteine whose ``SG`` is bonded to another cysteine's has no thiol proton, so it does not titrate at all. Prodes finds those bonds and gives the two cysteines no side-chain pKa, which keeps them neutral at every pH.
+
+Before version 6.0 it had no concept of a disulfide and gave every ``CYS`` the free-thiol pKa of 8.33. On lysozyme, which has four disulfides and no free cysteine, that put the formal charge at pH 8.5 at **-1 when it is +7**, and the isoelectric point at 8.9 when it is 10.3.
+
+How much of your output moves depends on the pH you run at, but it is never nothing:
+
+* **At pH 7**, one of the 54 default features changes on lysozyme: the isoelectric point, which is a property of the whole titration curve and so shifts at any pH you ask for it. With ``--full-features`` 20 of the 105 change, because the ``*Average`` columns use fractional charges and a free thiol at pKa 8.33 is already 4 per cent ionised at pH 7.
+* **At pH 8.5**, 21 of the 54 change, including the formal charge, the dipole and the whole ``SurfEp`` block.
+
+How the bonds are found:
+
+* An ``SSBOND`` record is authoritative **for the two cysteines it names**. Records that carry a crystallographic symmetry operator, or that name a residue not in the coordinates, are skipped, and the rest of the cysteines still go to the geometry. A record whose two sulfurs are not at bonding distance is honoured, with a warning, because that usually means a strained bond and occasionally means a reduced structure carrying stale records.
+* Every cysteine no record claims is paired **by distance**, with a cutoff of **2.5 Å** between the ``SG`` atoms, each sulfur taking at most one partner and the shortest bond winning a contested one. That is the same cutoff PROPKA and PDB2PQR use, so the distance criterion is the same one your pKa predictor applies. The two can still reach different answers, since Prodes also honours ``SSBOND`` records and PROPKA does not read them.
+
+AlphaFold models carry no ``SSBOND`` records but do place the sulfurs at bonding distance, so they are handled by the geometric route and need nothing special.
+
+The count that was found is printed at the start of the run and recorded in ``prodes_run.json`` inside the output bundle. It is worth a glance: a structure you expect to have disulfides that reports none is being titrated as though every cysteine were free.
+
+.. note::
+
+    **This matters most when you are not using PROPKA.** PROPKA detects disulfides itself and reports a bridged cysteine as ``99.99``, its marker for a group that does not titrate, and Prodes has always passed that through. So a run with ``--pka`` was already close to right, and a run without it was not.
+
+What is still not handled, in every case because the evidence is not an ``SG``-``SG`` distance:
+
+* **A cysteine bound to a metal**, as in a zinc finger, is coordinated and deprotonated rather than protonated, and Prodes titrates it as a free thiol. The metal is in a ``HETATM`` record, which the parser does not read.
+* **A thioether link**, such as the two cysteines that bond to the haem of cytochrome c, is nowhere near ``SG``-``SG`` bonding distance.
+* **A real bond a model has stretched.** A low-confidence AlphaFold region can place a genuine disulfide well past 2.5 Å, in which case both cysteines are titrated. This fails in the safe direction, back to the old behaviour.
+* **A bond that is not there.** The reverse also happens: the AlphaFold model of metallothionein-2, which has twenty metal-binding cysteines and no disulfides at all, places two of them 2.05 Å apart. No distance cutoff can tell that apart from a real bond.
+* **An inter-chain bond in a single-chain model.** An antibody heavy chain modelled on its own has nothing to bond to, so the cysteines that would join the light chain look free.
+* **A cysteine with alternate locations.** Prodes reads the ``altLoc`` column as part of the atom name, so a disordered ``SG`` is not recognised as an ``SG`` at all. Such a cysteine is invisible both to this detection and to the charge calculation, which means it carries no charge either way.
+
+One thing deliberately unchanged: a cystine is more hydrophobic than a free thiol, but ``CYS`` keeps a single hydrophobicity value, so the ``Mhp`` features and the ``CYSSurfFrac`` column do not distinguish the two.
 
 Other pKa predictors
 ~~~~~~~~~~~~~~~~~~~~~
@@ -644,7 +681,7 @@ What Prodes offers, then, is:
 Three things Prodes does **not** do, which the better tools here do:
 
 * **No conformational averaging.** Genentech's main finding is that descriptors taken from a single static structure are unstable, which is why they average over a 5 ns accelerated-MD ensemble; MOE averages over a LowModeMD ensemble, and Aggrescan3D offers a coarse-grained dynamic mode. Prodes computes from whatever one structure you give it, and inherits that instability. You can approximate the ensemble average by running Prodes over several structures and averaging yourself, but nothing in the package does it for you.
-* **No structure preparation.** The commercial suites correct the input before they describe it — resolve alternate conformations, rebuild missing side chains, cap chain breaks, form disulfide bonds, optimise the hydrogen-bond network. Prodes uses the coordinates as given, so preparing the structure is your responsibility.
+* **Almost no structure preparation.** The commercial suites correct the input before they describe it — resolve alternate conformations, rebuild missing side chains, cap chain breaks, form disulfide bonds, optimise the hydrogen-bond network. Prodes does none of that. The one exception is that it *recognises* existing disulfide bonds, so that a cystine is not titrated as a free thiol; it does not form them, and it does not touch the coordinates. Preparing the structure is otherwise your responsibility.
 * **No region restriction, and no pockets.** Every Prodes feature covers the whole molecule. There is no way to compute over a CDR, a domain or an interface, and nothing equivalent to NanoShaper's cavity and pocket detection.
 
 A caveat that applies to every tool in this list, Prodes included, and is made forcefully in both the Genentech and PROPERMAB papers: descriptor values are sensitive to the structure model, the protonation assignment and the software version, and different packages computing nominally the same quantity often disagree. Treat any of these numbers as reproducible only within one pipeline held fixed.
@@ -657,6 +694,7 @@ Improvements in this fork
 * **Vectorised surface grid construction** — grid construction and cell filling refactored to use NumPy arrays throughout.
 * **Multi-core parallelism** — the SASA, surface grid and shell phases are spread across worker processes on Linux.
 * **Reduced feature set** — 54 non-redundant features by default, with the original 105 available via ``--full-features``.
+* **Disulfide bonds recognised** — a cysteine bonded into a disulfide is no longer titrated as a free thiol, which corrected the charge-derived features of every structure with a disulfide above about pH 8. See `Cysteines and disulfide bonds`_.
 * **Bug fixes** — trimean edge case for small arrays, ``surface_exit`` ``None`` handling in shell potential mapping, and a ``read_propka`` argument bug in the PDB parser.
 * **Test suite** — unit and regression tests added, including a committed reference output file (``tests/data/ARH96693_prodes_orig_output.csv``) generated by the original unrefactored code. The regression test verifies that every feature column and every feature value produced by this fork matches the original output within tolerance.
 
@@ -665,7 +703,7 @@ Output compatibility
 
 With ``--full-features``, the output has the same 105 columns in the same order as the original Prodes.
 
-The **values** are identical only with ``--ionic-strength 0``. From version 5.0 the electrostatic potential is screened by default, which changes the 38 ``SurfEp`` columns; the other 67, including every ``ShellEp`` column, are unaffected either way. The regression test in ``tests/test_sasa.py`` therefore runs at zero ionic strength when comparing against the committed reference file ``tests/data/ARH96693_prodes_orig_output.csv``. See `Ionic strength and screening`_.
+The **values** are identical only with ``--ionic-strength 0``, and then only for a structure with no disulfide bonds. From version 6.0 a cysteine bonded into a disulfide is not titrated, which changes the charge-derived features of any structure that has one. See `Cysteines and disulfide bonds`_. From version 5.0 the electrostatic potential is screened by default, which changes the 38 ``SurfEp`` columns; the other 67, including every ``ShellEp`` column, are unaffected either way. The regression test in ``tests/test_sasa.py`` therefore runs at zero ionic strength when comparing against the committed reference file ``tests/data/ARH96693_prodes_orig_output.csv``. See `Ionic strength and screening`_.
 
 The default reduced output is a strict subset of those columns, in the same order and with identical values. No column is renamed and no column is recomputed, so a reduced run and a full run of the same structure agree exactly on the 54 columns they share.
 

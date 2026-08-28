@@ -85,7 +85,8 @@ WHAT IS IN HERE
   {name}_hydrophobicity.pdb        the surface points, hydrophobicity in the
                                    B factor column
   {name}.pdb                       the structure this run was given
-  prodes_run.json                  version, settings and time of the run
+  prodes_run.json                  version, settings, time of the run, and
+                                   how many disulfide bonds were found
 
 The point clouds and the features come out of the same calculation, so a picture
 here can never disagree with a number in the feature table.
@@ -119,14 +120,21 @@ def prodes_version():
         return "unknown"
 
 
-def run_metadata(pdb_file, settings, n_points, ep):
-    """Returns the record of what was run, written into every bundle."""
+def run_metadata(pdb_file, settings, n_points, ep, disulfides=0):
+    """Returns the record of what was run, written into every bundle.
+
+    The disulfide count is here rather than in the feature table because it
+    describes the input rather than the protein's surface, and because it is how
+    a user checks that detection saw what they expected: a structure that should
+    have disulfides and reports none is titrating its cysteines as free thiols.
+    """
 
     return {
         "prodes_version": prodes_version(),
         "utc": datetime.now(UTC).isoformat(),
         "input_file": str(pdb_file),
         "settings": settings,
+        "disulfides": int(disulfides),
         "surface_points": int(n_points),
         "ep_min_volts": round(float(ep.min()), 3) if n_points else None,
         "ep_max_volts": round(float(ep.max()), 3) if n_points else None,

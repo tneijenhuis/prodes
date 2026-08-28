@@ -138,7 +138,10 @@ def test_pkas():
     assert residues["ARG"].pkas == [{"ARG": 13.8}]
     assert residues["ASN"].pkas is None
     assert residues["ASP"].pkas == [{"ASP": 3.86}]
-    assert residues["CYS"].pkas == [{"CYS": 8.33}]
+    # Every cysteine of 1GDW is bonded into a disulfide, so none of them has a
+    # titratable side chain at all. The free-thiol value is covered by
+    # test_a_free_cysteine_keeps_the_thiol_pka below, on a structure that has one.
+    assert residues["CYS"].pkas is None
     assert residues["GLN"].pkas is None
     assert residues["GLU"].pkas == [{"GLU": 4.25}]
     assert residues["GLY"].pkas is None
@@ -194,7 +197,9 @@ def test_charge():
     assert round(residues["GLU"].charge(5), 3) == -1
     assert round(residues["ASP"].charge(14), 3) == -1
     assert round(residues["TYR"].charge(14), 3) == -1
-    assert round(residues["CYS"].charge(14), 3) == -1
+    # A disulfide-bonded cysteine has no thiol proton to lose, so it stays neutral
+    # even at pH 14. See test_a_free_cysteine_titrates below for the other case.
+    assert round(residues["CYS"].charge(14), 3) == 0
     assert round(c_term.charge(14), 3) == -1
 
 
@@ -221,3 +226,39 @@ def test_mass():
     assert residues["TRP"].mass == 186.2132
     assert residues["TYR"].mass == 163.1760
     assert residues["VAL"].mass == 99.1326
+
+
+# 1GDW is all disulfides and no free thiol, so the free-cysteine half of the
+# behaviour needs a structure that has both. Serum albumin is the textbook one:
+# 34 disulfides and a single free cysteine per chain, Cys 34.
+albumin = ps.PDBparser().parse("tests/data/1AO6.pdb.zip")
+albumin_residues = {(residue.chain.name, residue.number): residue for residue in albumin.residues}
+free_cysteine = albumin_residues[("A", 34)]
+bonded_cysteine = albumin_residues[("A", 53)]
+
+
+def test_a_free_cysteine_keeps_the_thiol_pka():
+    """A cysteine with no disulfide partner is titratable exactly as before."""
+
+    assert free_cysteine.disulfide_partner is None
+    assert free_cysteine.pkas == [{"CYS": 8.33}]
+    assert free_cysteine.side_chain_pka == 8.33
+
+
+def test_a_bonded_cysteine_has_no_side_chain_pka():
+    """Its partner is recorded, and the side chain it would have titrated is gone."""
+
+    assert bonded_cysteine.disulfide_partner is albumin_residues[("A", 62)]
+    assert bonded_cysteine.pkas is None
+    assert bonded_cysteine.side_chain_pka is None
+
+
+def test_a_free_cysteine_titrates_and_a_bonded_one_does_not():
+    """The two cysteines are in the same structure, so nothing but the bond differs."""
+
+    assert round(free_cysteine.charge(7), 3) == 0
+    assert round(free_cysteine.charge(9), 3) == -1
+    assert round(free_cysteine.charge(14), 3) == -1
+
+    assert round(bonded_cysteine.charge(9), 3) == 0
+    assert round(bonded_cysteine.charge(14), 3) == 0

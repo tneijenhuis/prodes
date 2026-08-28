@@ -1,5 +1,16 @@
 # PROPKA dependency of Prodes surface features
 
+> **Measured before disulfide detection (2026-08-28).** This analysis was run against a version of Prodes
+> that titrated every cysteine as a free thiol, including those bonded into disulfides. PROPKA reports a
+> bonded cysteine as non-titratable, so part of the difference between the two runs measured here was
+> Prodes disagreeing with PROPKA about cystines rather than about predicted pKa values. From version 6.0
+> Prodes now detects the bonds itself, so the two agree about cystines and the disagreement measured here is
+> larger than the one a current run would show. On 1GDW the number of responding features is unchanged at 19,
+> but the size of the shift is not: the isoelectric point difference between a default and a PROPKA run falls
+> from 1.7 units to 0.2. The numbers below have not been recomputed, because the 819-structure set is not in
+> this repository.
+
+
 AlphaFold structures compared (present in both runs): **819**
 Features analysed (shared by both runs): **56**
 PROPKA-dependent: **22**   PROPKA-independent: **34**

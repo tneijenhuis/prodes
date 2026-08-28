@@ -8,7 +8,7 @@ file pass a made up filename to a mocked calculate(), which pins the argument
 plumbing and nothing else.
 
 It is not a corner of the package that can be left to look after itself. On
-1GDW a real PROPKA prediction moves 18 of the 54 reduced features, formal
+1GDW a real PROPKA prediction moves 19 of the 54 reduced features, formal
 charge included, so a refactor that quietly stopped applying the values would
 change more than a third of the output while every other test still passed.
 Downstream code already depends on it: biochai runs PROPKA and imports
@@ -24,9 +24,11 @@ original author, so the whole chain is covered from the repository alone. None
 of this needs PROPKA, or any other predictor, to be installed.
 """
 
+import logging
+
 from prodes.core.structure import Structure
 from prodes.io.parser import PDBparser, read_pka
-from prodes.io.pka_converter import convert_propka, write_json
+from prodes.io.pka_converter import PROPKA_NOT_TITRATABLE, convert_propka, write_json
 from tests.pipeline_output import pipeline_output
 
 PDB_PATH = "tests/data/1GDW.pdb.zip"
@@ -121,3 +123,88 @@ def test_a_pka_file_changes_the_calculated_features(tmp_path):
     assert "Formal charge" in changed
     assert "Isoelectric point" in changed
     assert len(changed) > 10, f"only {len(changed)} features responded to the pKa file: {changed}"
+
+
+# The pKa file and the structure can disagree about a residue, and until issue #6
+# the file always won by default: redo_pkas replaced a residue's whole list, so a
+# group the file did not mention was deleted rather than left at its default.
+
+
+def test_a_group_the_file_omits_keeps_its_default():
+    """A file naming a side chain but not the terminus must not delete the terminus.
+
+    PROPKA always emits both, so this never bit on a PROPKA file, but the
+    deletion was silent and the terminal atom then took its charge from the
+    side-chain value.
+    """
+
+    structure = PDBparser().parse(PDB_PATH)
+    first = structure.residues[0]
+
+    structure.redo_pkas({1: [{"LYS": 11.34}]})
+
+    assert first.pkas == [{"LYS": 11.34}, {"N+": 9.69}]
+    assert first.group_pka("N+") == 9.69
+
+
+def test_omitted_groups_are_reported(caplog):
+    """Silence used to mean "use the textbook value", which is rarely what was meant."""
+
+    structure = PDBparser().parse(PDB_PATH)
+
+    with caplog.at_level(logging.WARNING):
+        structure.redo_pkas({1: [{"LYS": 11.34}]})
+
+    assert "are not in the pKa file" in caplog.text
+
+
+def test_a_complete_pka_file_is_reported_silently(caplog):
+    """PROPKA covers all 46 titratable groups of 1GDW, so nothing should be flagged."""
+
+    structure = PDBparser().parse(PDB_PATH)
+
+    with caplog.at_level(logging.WARNING):
+        structure.redo_pkas(convert_propka(PROPKA_PATH))
+
+    assert caplog.text == ""
+
+
+def test_a_predicted_pka_cannot_titrate_a_bonded_cysteine():
+    """The structure outranks the file: the group the file predicts does not exist."""
+
+    structure = PDBparser().parse(PDB_PATH)
+    cysteine = next(residue for residue in structure.residues if residue.number == 6)
+    assert cysteine.disulfide_partner is not None, "1GDW cysteine 6 is bonded to 128"
+
+    structure.redo_pkas({6: [{"CYS": 9.0}]})
+
+    assert cysteine.pkas is None
+    assert round(cysteine.charge(11), 3) == 0
+
+
+def test_propka_reports_bonded_cysteines_as_not_titratable():
+    """PROPKA writes 99.99 for a bridged cysteine rather than leaving it out.
+
+    The issue that prompted this expected an omission, and the safety net was
+    designed around that. It is worth pinning what the file really contains, since
+    the two mechanisms have to agree rather than fight.
+    """
+
+    pkas = convert_propka(PROPKA_PATH)
+    bonded = [6, 30, 65, 77, 81, 95, 116, 128]
+
+    assert [pkas[number] for number in bonded] == [[{"CYS": PROPKA_NOT_TITRATABLE}]] * len(bonded)
+
+
+def test_a_pka_for_a_group_the_residue_does_not_have_is_dropped(caplog):
+    """Such an entry used to reach charged_atoms and raise a TypeError there."""
+
+    structure = PDBparser().parse(PDB_PATH)
+    second = structure.residues[1]
+
+    with caplog.at_level(logging.WARNING):
+        structure.redo_pkas({second.number: [{"SER": 10.0}]})
+
+    assert "which that residue does not have" in caplog.text
+    assert second.pkas is None
+    assert second.charge(7) == 0

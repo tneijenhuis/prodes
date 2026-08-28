@@ -524,6 +524,9 @@ def calculate(
     validate_settings(mem_limit_mb)
 
     structure = prepare_structure(pdb_file, pkas_file)
+    # Reported before the slow phases, so that a structure whose disulfides were
+    # not found can be spotted without waiting for the run to finish.
+    print(f"{structure.name}: {len(structure.disulfides)} disulfide bonds detected")
     surface_points = construct_surface_grid(structure, r_probe)
     features = {"ID": structure.name}
     print(f"calculating {structure.name}")
@@ -550,7 +553,7 @@ def calculate(
         "full_features": full_features,
         "ionic_strength_molar": ionic_strength_molar,
     }
-    metadata = run_metadata(pdb_file, settings, len(coords), ep)
+    metadata = run_metadata(pdb_file, settings, len(coords), ep, disulfides=len(structure.disulfides))
 
     return write_bundle(out_file, structure.name, calculated_features, coords, ep, lipo, pdb_file, metadata, hydro_scale)
 

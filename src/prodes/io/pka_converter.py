@@ -3,6 +3,13 @@ import json
 
 from prodes import data
 
+# PROPKA writes this in place of a pKa for a group it has decided cannot
+# titrate, which in practice means a cysteine it found bonded into a disulfide.
+# It is not a prediction, and it is passed through unchanged: it puts the charge
+# at zero at every reachable pH, which is the same answer prodes reaches from
+# the structure itself.
+PROPKA_NOT_TITRATABLE = 99.99
+
 
 def parse_arguments():
     """parses the arguments"""

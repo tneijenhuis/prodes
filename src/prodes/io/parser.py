@@ -1,13 +1,17 @@
+import logging
 import tempfile
 import zipfile
 from pathlib import Path
 
 import numpy as np
 
+from prodes.calculations.disulfides import IDENTITY_SYMMETRY_OPERATOR, assign_disulfides
 from prodes.core.atom import Atom
 from prodes.core.chain import Chain
 from prodes.core.residue import Residue
 from prodes.core.structure import Structure
+
+logger = logging.getLogger(__name__)
 
 
 def pdb_name_in_archive(archive: zipfile.ZipFile, source):
@@ -54,6 +58,34 @@ def read_pdb_text(file):
         return zipped.read(pdb_name_in_archive(zipped, path)).decode()
 
 
+def read_ssbond_line(line):
+    """Reads one SSBOND record and returns (chain1, number1, chain2, number2, sym1, sym2).
+
+    The record names the two cysteines of a disulfide bond and the symmetry
+    operator each is under. A blank or missing symmetry field is read as the
+    identity operator, because hand-written and trimmed PDB files routinely stop
+    before column 72 and a bond would otherwise be discarded for being
+    incompletely written rather than for being crystallographic.
+
+    Returns None for a line that cannot be read, so that one malformed record
+    costs its own bond rather than the whole file.
+    """
+
+    try:
+        chain1 = line[15].strip()
+        number1 = int(line[17:21])
+        chain2 = line[29].strip()
+        number2 = int(line[31:35])
+    except (IndexError, ValueError):
+        logger.warning("could not read an SSBOND record, ignoring it: %s", line.rstrip())
+        return None
+
+    symmetry1 = line[59:65].strip() or IDENTITY_SYMMETRY_OPERATOR
+    symmetry2 = line[66:72].strip() or IDENTITY_SYMMETRY_OPERATOR
+
+    return chain1, number1, chain2, number2, symmetry1, symmetry2
+
+
 class PDBparser:
 
     def parse(self, file, identifier="ATOM"):
@@ -96,10 +128,18 @@ class PDBparser:
             return self._read_pdb(pdb, name)
 
     def _read_pdb(self, pdb, name):
-        """Function takes a PDB formatted file and returns a Structure object which contains all atom information of the file"""
+        """Function takes a PDB formatted file and returns a Structure object which contains all atom information of the file
+
+        SSBOND records are collected on the same pass and handed to the
+        disulfide detection at the end, so that any structure which has been
+        parsed from a file already knows which of its cysteines are bonded.
+        Anything that builds a Structure some other way has to call
+        assign_disulfides itself.
+        """
 
         current_structure = self._create_structure(name)
 
+        ssbond_records = []
         for line in pdb:
             identifier = line[0:6].strip()
             if identifier == self.identifier:
@@ -107,7 +147,16 @@ class PDBparser:
                 current_atom = Atom(identifier, *information)
                 self._add_atom(current_atom, current_structure)
 
+            # Only while reading protein atoms. Under a different identifier the
+            # parser is not building residues these records could refer to.
+            elif identifier == "SSBOND" and self.identifier == "ATOM":
+                record = read_ssbond_line(line)
+                if record is not None:
+                    ssbond_records.append(record)
+
         current_structure.residues[-1].terminus = "C"
+        assign_disulfides(current_structure, ssbond_records)
+
         return current_structure
 
     def _create_structure(self, name):
