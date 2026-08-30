@@ -2,6 +2,8 @@ Prodes
 ===========
 Prodes is calculates features from 3D protein structures with a general focus on the protein surface.
 
+**Currently, the code is maintained by Mark Teese of 22DataCatalysis GmbH in an improved** `fork <https://github.com/datacatalysis/prodes>`_ **that contains performance updates (a 170x speedup for many proteins) and several bug fixes.**
+
 Requirements
 ~~~~~~~~~~~~~~
 
